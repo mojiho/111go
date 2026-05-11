@@ -129,7 +129,7 @@ public class EnemyEliteMelee : EnemyBase
         attackCoolTimer = cooldown;
         StopMoving();
 
-        anim?.SetTrigger("WindUp");
+        anim?.Play("Idle", 0, 0f);   // 윈드업 — 잠깐 멈춤
         yield return new WaitForSeconds(attackWindup * (isPhase2 ? 0.65f : 1f));
 
         if (isDead) { isActing = false; yield break; }
@@ -140,6 +140,13 @@ public class EnemyEliteMelee : EnemyBase
 
         float actualRushSpeed = rushSpeed * (isPhase2 ? phase2SpeedMultiplier : 1f);
         rb.linearVelocity = new Vector2(dir * actualRushSpeed, 0f);
+
+        // 히트박스를 돌진 방향 쪽으로 배치
+        if (meleeHitBox != null)
+        {
+            Vector3 hp = meleeHitBox.transform.localPosition;
+            meleeHitBox.transform.localPosition = new Vector3(Mathf.Abs(hp.x) * dir, hp.y, hp.z);
+        }
 
         meleeHitBox?.Activate(attackDamage);
 
@@ -161,7 +168,7 @@ public class EnemyEliteMelee : EnemyBase
 
         float prevGravity = rb.gravityScale;
         rb.gravityScale = 0f;
-        anim?.SetTrigger("Attack");
+        anim?.Play("Attack", 0, 0f);
 
         yield return new WaitForSeconds(0.15f);
 
@@ -208,7 +215,7 @@ public class EnemyEliteMelee : EnemyBase
         float dodgeDir = attackDir > 0f ? -1f : 1f;
         rb.linearVelocity = new Vector2(dodgeDir * dodgeSpeed, rb.linearVelocity.y + 1.5f);
 
-        anim?.SetTrigger("Dash");
+        anim?.Play("Walk", 0, 0f);   // 회피 중 Walk 재생
         yield return new WaitForSeconds(dodgeDuration);
 
         rb.linearVelocity = new Vector2(rb.linearVelocity.x * 0.3f, rb.linearVelocity.y);

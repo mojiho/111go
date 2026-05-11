@@ -76,7 +76,7 @@ public class EnemyRanged : EnemyBase
         fireCoolTimer = fireRate;
         SetState(EnemyState.Attack);
 
-        anim?.SetTrigger("Shoot");
+        anim?.Play("Cast", 0, 0f);
         yield return new WaitForSeconds(0.3f);
 
         for (int i = 0; i < burstCount; i++)

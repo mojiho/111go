@@ -1,15 +1,15 @@
 using System.Collections;
 using UnityEngine;
 
-// 근접 돌진형 적 — Idle → 감지 → 추격 → 돌진 공격
+// 근접 적 — Idle → 감지 → 추격 → 정지 후 제자리 공격
 public class EnemyMelee : EnemyBase
 {
     [Header("Melee Attack")]
     public float attackDamage = 20f;
-    public float rushSpeed = 14f;
-    public float rushDuration = 0.25f;
     public float attackCooldown = 2f;
     public float attackWindup = 0.4f;       // 공격 전 멈추는 시간
+    public float attackActiveTime = 0.25f;  // 히트박스 활성 시간
+    public float attackRecover = 0.2f;      // 공격 후 경직
 
     [Header("Hitbox")]
     public EnemyHitBox meleeHitBox;   // EnemyHitBox: 플레이어에게 데미지
@@ -37,9 +37,12 @@ public class EnemyMelee : EnemyBase
                     SetState(EnemyState.Idle);
                     break;
                 }
-                if (!isActing && dist <= attackRange && attackCoolTimer <= 0f)
+                if (!isActing && dist <= attackRange)
                 {
-                    StartCoroutine(DoRushAttack());
+                    // 공격 범위 내 → 즉시 정지
+                    StopMoving();
+                    if (attackCoolTimer <= 0f)
+                        StartCoroutine(DoAttack());
                     break;
                 }
                 if (!isActing) MoveToward(player.position, moveSpeed);
@@ -52,29 +55,36 @@ public class EnemyMelee : EnemyBase
         }
     }
 
-    private IEnumerator DoRushAttack()
+    private IEnumerator DoAttack()
     {
         isActing = true;
         SetState(EnemyState.Attack);
         attackCoolTimer = attackCooldown;
         StopMoving();
 
-        // 윈드업 (플레이어가 눈치채는 시간)
-        anim?.SetTrigger("WindUp");
+        // 윈드업 — Idle 포즈로 잠깐 멈춤 (눈치채는 시간)
+        anim?.Play("Idle", 0, 0f);
         yield return new WaitForSeconds(attackWindup);
 
         if (isDead) { isActing = false; yield break; }
 
-        // 돌진
-        float dir = player.position.x > transform.position.x ? 1f : -1f;
-        rb.linearVelocity = new Vector2(dir * rushSpeed, 0f);
+        // 공격 모션 + 히트박스 활성 (제자리)
+        anim?.Play("Attack", 0, 0f);
+
+        // 히트박스를 현재 바라보는 방향으로 배치
+        if (meleeHitBox != null)
+        {
+            float dir = player != null && player.position.x > transform.position.x ? 1f : -1f;
+            Vector3 hp = meleeHitBox.transform.localPosition;
+            meleeHitBox.transform.localPosition = new Vector3(Mathf.Abs(hp.x) * dir, hp.y, hp.z);
+        }
 
         meleeHitBox?.Activate(attackDamage);
-
-        yield return new WaitForSeconds(rushDuration);
-
+        yield return new WaitForSeconds(attackActiveTime);
         meleeHitBox?.Deactivate();
-        rb.linearVelocity = new Vector2(rb.linearVelocity.x * 0.2f, rb.linearVelocity.y);
+
+        // 공격 후 경직
+        yield return new WaitForSeconds(attackRecover);
 
         isActing = false;
         if (!isDead) SetState(EnemyState.Chase);

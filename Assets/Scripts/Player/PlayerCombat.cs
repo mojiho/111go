@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class PlayerCombat : MonoBehaviour
 {
@@ -9,6 +10,8 @@ public class PlayerCombat : MonoBehaviour
     public float comboDamage = 30f;
     public float comboResetTime = 0.6f;
     public float attackKnockback = 4f;
+    public float attackStepSpeed = 6f;      // 방향키 누른 채 공격 시 전진 속도
+    public float attackStepDecay = 0.25f;   // 스텝 후 잔속도 감쇠 배수 (0=즉시정지)
 
     [Header("Skill 1 - 돌진 참격 (K)")]
     public HitBox skill1HitBox;
@@ -36,6 +39,13 @@ public class PlayerCombat : MonoBehaviour
 
     [Header("Slow Gauge Gain")]
     public float gaugePerHit = 15f;
+
+    [Header("Slash Effect")]
+    public float slashLength = 2f;
+    public float slashYOffset = 0.5f;
+    public Color slashComboColor = Color.white;
+    public Color slashSkill1Color = new Color(0.4f, 0.9f, 1f, 1f);
+    public Color slashSkill2Color = new Color(1f, 0.8f, 0.3f, 1f);
 
     public bool IsLocked { get; private set; }
 
@@ -84,6 +94,17 @@ public class PlayerCombat : MonoBehaviour
 
     private IEnumerator DoComboAttack()
     {
+        // ── 방향 전환 먼저 (애니메이션 재생 이전에) ──
+        var kb = Keyboard.current;
+        float stepDir = 0f;
+        if (kb != null)
+        {
+            if (kb.rightArrowKey.isPressed)     stepDir = 1f;
+            else if (kb.leftArrowKey.isPressed) stepDir = -1f;
+        }
+        if (stepDir != 0f)
+            controller.SetFacing((int)stepDir);
+
         IsLocked = true;
         controller.SetState(PlayerState.Attack);
         comboQueued = false;
@@ -93,10 +114,30 @@ public class PlayerCombat : MonoBehaviour
             comboIndex = (comboIndex + 1) % comboHitBoxes.Length;
         comboTimer = comboResetTime;
 
-        // Attack 애니메이션 재생 (히트 타이밍마다 처음부터)
-        controller.PlayAttackAnim();
+        // 짝수타 → Attack, 홀수타 → Attack2 (두 모션 번갈아)
+        controller.PlayAttackAnim(idx);
+
+        // 슬래시 이펙트 — 1타: \ , 2타: / (오른쪽 기준, 왼쪽일 땐 좌우 반전)
+        // 오른쪽(+1): 1타 -45°(\), 2타 +45°(/)
+        // 왼쪽 (-1): 1타 +45°(/처럼 보임 → 실제론 좌우 반전된 \), 2타 -45°
+        {
+            float baseAngle = (idx % 2 == 0) ? -45f : 45f;
+            float angle = baseAngle * controller.FacingDirection;
+            Vector3 fxPos = transform.position + Vector3.up * slashYOffset
+                            + Vector3.right * (0.6f * controller.FacingDirection);
+            SlashEffect.Spawn(fxPos, angle, slashLength, slashComboColor);
+        }
+
+        // 방향키 누른 쪽으로 짧게 전진 (눌려 있지 않으면 제자리)
+        if (stepDir != 0f)
+            rb.linearVelocity = new Vector2(stepDir * attackStepSpeed, rb.linearVelocity.y);
+        else
+            rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
 
         yield return new WaitForSeconds(comboTimes[idx] * 0.4f);
+
+        // 히트 발생 시점에서 잔속도 감쇠 — 너무 멀리 미끄러지지 않게
+        rb.linearVelocity = new Vector2(rb.linearVelocity.x * attackStepDecay, rb.linearVelocity.y);
 
         if (comboHitBoxes.Length > idx && comboHitBoxes[idx] != null)
             comboHitBoxes[idx].Activate(comboDamage, attackKnockback * controller.FacingDirection, OnHitEnemy);
@@ -131,6 +172,13 @@ public class PlayerCombat : MonoBehaviour
         float dir = controller.FacingDirection;
         rb.gravityScale = 0f;
         rb.linearVelocity = new Vector2(dir * skill1DashSpeed, 0f);
+
+        // 돌진 슬래시 — 가로(ㅡ) 방향, 길이 길게
+        {
+            Vector3 fxPos = transform.position + Vector3.up * slashYOffset
+                            + Vector3.right * (0.8f * dir);
+            SlashEffect.Spawn(fxPos, 0f, slashLength * 1.6f, slashSkill1Color, 0.2f, 0.35f);
+        }
 
         yield return new WaitForSeconds(skill1Duration * 0.3f);
 
@@ -213,7 +261,16 @@ public class PlayerCombat : MonoBehaviour
         {
             if (controller.State == PlayerState.Dead) break;
 
-            controller.PlayAttackAnim();
+            controller.PlayAttackAnim(i);   // 난격 — 두 모션 번갈아 빠르게
+
+            // 난격 슬래시 — 빠른 \ / 교차
+            {
+                float baseAngle = (i % 2 == 0) ? -45f : 45f;
+                float angle = baseAngle * controller.FacingDirection;
+                Vector3 fxPos = transform.position + Vector3.up * slashYOffset
+                                + Vector3.right * (0.6f * controller.FacingDirection);
+                SlashEffect.Spawn(fxPos, angle, slashLength * 1.1f, slashComboColor, 0.12f, 0.3f);
+            }
 
             Collider2D[] cols = Physics2D.OverlapCircleAll(transform.position, ultimateRadius, enemyLayer);
             foreach (var col in cols)
