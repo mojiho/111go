@@ -100,7 +100,7 @@ public abstract class EnemyBase : MonoBehaviour
     {
         EnemyState prev = State;
         State = EnemyState.Hurt;
-        anim?.SetTrigger("Hurt");
+        anim?.Play("Hurt", 0, 0f);
 
         yield return new WaitForSeconds(0.15f);
 
@@ -113,11 +113,11 @@ public abstract class EnemyBase : MonoBehaviour
         State = EnemyState.Dead;
         rb.linearVelocity = Vector2.zero;
 
-        anim?.SetTrigger("Die");
+        anim?.Play("Death", 0, 0f);
         GetComponent<Collider2D>().enabled = false;
 
         // 슬로우모션 게이지 보상
-        FindObjectOfType<SlowMotionSystem>()?.AddGauge(isElite ? 30f : 10f);
+        FindFirstObjectByType<SlowMotionSystem>()?.AddGauge(isElite ? 30f : 10f);
 
         WaveManager.Instance?.OnEnemyKilled();
 
@@ -128,7 +128,13 @@ public abstract class EnemyBase : MonoBehaviour
     {
         if (State == newState) return;
         State = newState;
-        anim?.SetInteger("State", (int)newState);
+        // Bringer of Death 컨트롤러도 파라미터 없으므로 Play() 사용
+        switch (newState)
+        {
+            case EnemyState.Idle:   anim?.Play("Idle",   0, 0f); break;
+            case EnemyState.Chase:  anim?.Play("Walk",   0, 0f); break;
+            case EnemyState.Attack: anim?.Play("Attack", 0, 0f); break;
+        }
     }
 
     private void OnDrawGizmosSelected()

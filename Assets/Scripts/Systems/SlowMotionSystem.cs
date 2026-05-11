@@ -109,6 +109,16 @@ public class SlowMotionSystem : MonoBehaviour
         OnGaugeChanged?.Invoke(GaugeRatio);
     }
 
+    // 필살기(난격) 등에서 게이지를 소비할 때 사용
+    public void ConsumeGauge(float amount)
+    {
+        CurrentGauge = Mathf.Max(0f, CurrentGauge - amount);
+        OnGaugeChanged?.Invoke(GaugeRatio);
+
+        if (IsActive && CurrentGauge <= 0f)
+            Deactivate();
+    }
+
     private void OnApplicationQuit()
     {
         Time.timeScale = 1f;

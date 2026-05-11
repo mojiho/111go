@@ -18,6 +18,10 @@ public class UIManager : MonoBehaviour
     [Header("Skill Cooldown")]
     public Image skill1CooldownOverlay;
     public Image skill2CooldownOverlay;
+    public Image parryCooldownOverlay;
+
+    [Header("Ultimate Ready")]
+    public GameObject ultimateReadyIndicator;   // 필살기 준비됐을 때 활성화
 
     [Header("Wave Info")]
     public TextMeshProUGUI waveText;
@@ -25,6 +29,7 @@ public class UIManager : MonoBehaviour
 
     private PlayerStats playerStats;
     private PlayerCombat playerCombat;
+    private ParrySystem parrySystem;
     private SlowMotionSystem slowMo;
     private WaveManager waveManager;
 
@@ -35,12 +40,13 @@ public class UIManager : MonoBehaviour
         {
             playerStats = player.GetComponent<PlayerStats>();
             playerCombat = player.GetComponent<PlayerCombat>();
+            parrySystem  = player.GetComponent<ParrySystem>();
 
             if (playerStats != null)
                 playerStats.OnHpChanged.AddListener(UpdateHP);
         }
 
-        slowMo = FindObjectOfType<SlowMotionSystem>();
+        slowMo = FindFirstObjectByType<SlowMotionSystem>();
         if (slowMo != null)
             slowMo.OnGaugeChanged.AddListener(UpdateSlowGauge);
 
@@ -79,6 +85,12 @@ public class UIManager : MonoBehaviour
 
         if (skill2CooldownOverlay != null)
             skill2CooldownOverlay.fillAmount = playerCombat.Skill2CooldownRatio;
+
+        if (parryCooldownOverlay != null && parrySystem != null)
+            parryCooldownOverlay.fillAmount = parrySystem.CooldownRatio;
+
+        if (ultimateReadyIndicator != null)
+            ultimateReadyIndicator.SetActive(playerCombat.UltimateReady);
     }
 
     private void UpdateWaveText(int current, int total)
