@@ -50,7 +50,7 @@ public class HitEffectManager : MonoBehaviour
         yield return new WaitForSecondsRealtime(duration);
 
         // 슬로우모션 중이면 slowTimeScale로 복귀
-        SlowMotionSystem slowMo = FindObjectOfType<SlowMotionSystem>();
+        SlowMotionSystem slowMo = FindFirstObjectByType<SlowMotionSystem>();
         float targetScale = (slowMo != null && slowMo.IsActive) ? slowMo.slowTimeScale : 1f;
         Time.timeScale = targetScale;
         Time.fixedDeltaTime = 0.02f * Time.timeScale;

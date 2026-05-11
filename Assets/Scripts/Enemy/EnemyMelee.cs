@@ -12,10 +12,10 @@ public class EnemyMelee : EnemyBase
     public float attackWindup = 0.4f;       // 공격 전 멈추는 시간
 
     [Header("Hitbox")]
-    public HitBox meleeHitBox;
+    public EnemyHitBox meleeHitBox;   // EnemyHitBox: 플레이어에게 데미지
 
     private float attackCoolTimer;
-    private bool isRushing;
+    private bool isActing;
 
     protected override void UpdateStateMachine()
     {
@@ -37,12 +37,12 @@ public class EnemyMelee : EnemyBase
                     SetState(EnemyState.Idle);
                     break;
                 }
-                if (dist <= attackRange && attackCoolTimer <= 0f)
+                if (!isActing && dist <= attackRange && attackCoolTimer <= 0f)
                 {
                     StartCoroutine(DoRushAttack());
                     break;
                 }
-                MoveToward(player.position, moveSpeed);
+                if (!isActing) MoveToward(player.position, moveSpeed);
                 break;
 
             case EnemyState.Attack:
@@ -54,6 +54,7 @@ public class EnemyMelee : EnemyBase
 
     private IEnumerator DoRushAttack()
     {
+        isActing = true;
         SetState(EnemyState.Attack);
         attackCoolTimer = attackCooldown;
         StopMoving();
@@ -62,21 +63,20 @@ public class EnemyMelee : EnemyBase
         anim?.SetTrigger("WindUp");
         yield return new WaitForSeconds(attackWindup);
 
-        if (isDead) yield break;
+        if (isDead) { isActing = false; yield break; }
 
         // 돌진
-        isRushing = true;
         float dir = player.position.x > transform.position.x ? 1f : -1f;
         rb.linearVelocity = new Vector2(dir * rushSpeed, 0f);
 
-        meleeHitBox?.Activate(attackDamage, dir * 6f);
+        meleeHitBox?.Activate(attackDamage);
 
         yield return new WaitForSeconds(rushDuration);
 
-        isRushing = false;
         meleeHitBox?.Deactivate();
         rb.linearVelocity = new Vector2(rb.linearVelocity.x * 0.2f, rb.linearVelocity.y);
 
+        isActing = false;
         if (!isDead) SetState(EnemyState.Chase);
     }
 
@@ -85,4 +85,6 @@ public class EnemyMelee : EnemyBase
         meleeHitBox?.Deactivate();
         base.Die();
     }
+
+    // 패링 확인용 — PlayerStats.TakeDamage에서 ParrySystem 체크 후 처리됨
 }

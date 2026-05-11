@@ -1,17 +1,19 @@
 using System.Collections;
 using UnityEngine;
 
-public enum PlayerState { Idle, Run, Jump, Fall, Dash, Attack, Skill1, Skill2, Dead }
+public enum PlayerState { Idle, Run, Jump, Fall, Dash, Attack, Skill1, Skill2, Ultimate, Parry, Dead }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-//  조작 요약 (키보드 / Xbox 패드)
-//  이동       A·D / Left Stick
-//  점프       Space / A버튼
-//  대시       Shift / B버튼
-//  공격       J / X버튼
-//  스킬1      K / Y버튼
-//  스킬2      L / RB
-//  슬로우모션  Tab (홀드) / LB (홀드)
+//  조작 요약
+//  이동       A·D
+//  점프       Space (2단 점프)
+//  대시       Shift
+//  공격       J (3콤보)
+//  스킬1      K (돌진 참격)
+//  스킬2      L (범위 회전베기)
+//  필살기     R (게이지 80% 필요)
+//  패링       Q
+//  슬로우모션  Tab (홀드)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 [RequireComponent(typeof(Rigidbody2D), typeof(PlayerCombat), typeof(PlayerStats))]
 public class PlayerController : MonoBehaviour
@@ -35,6 +37,18 @@ public class PlayerController : MonoBehaviour
     public int FacingDirection { get; private set; } = 1;
     public bool IsGrounded { get; private set; }
 
+    // ─── Warrior 애니메이션 State 이름 ───
+    // Warrior.controller에 파라미터가 없으므로 Play() 직접 사용
+    private const string ANIM_IDLE    = "Idle";
+    private const string ANIM_RUN     = "Run";
+    private const string ANIM_JUMP    = "jump";
+    private const string ANIM_FALL    = "Fall";
+    private const string ANIM_DASH    = "Dash";
+    private const string ANIM_ATTACK  = "Attack";
+    private const string ANIM_DASHATTACK = "Dash-Attack";   // Skill1 돌진 참격
+    private const string ANIM_HURT    = "Hurt";
+    private const string ANIM_DEATH   = "Death";
+
     private Rigidbody2D rb;
     private Animator anim;
     private PlayerCombat combat;
@@ -44,6 +58,7 @@ public class PlayerController : MonoBehaviour
     private int jumpCount;
     private bool isDashing;
     private bool canDash = true;
+    private PlayerState prevAnimState;
 
     private void Awake()
     {
@@ -74,7 +89,8 @@ public class PlayerController : MonoBehaviour
     private void CheckGround()
     {
         bool wasGrounded = IsGrounded;
-        IsGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
+        IsGrounded = groundCheck != null
+            && Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
 
         if (IsGrounded && !wasGrounded)
             jumpCount = 0;
@@ -84,29 +100,26 @@ public class PlayerController : MonoBehaviour
     {
         if (isDashing || combat.IsLocked) return;
 
-        // 키보드 + Left Stick 동시 지원
         moveInput = Input.GetAxisRaw("Horizontal");
 
-        // 이동 방향으로 페이싱 (마지막 방향 유지)
         if (moveInput > 0.1f) SetFacing(1);
         else if (moveInput < -0.1f) SetFacing(-1);
 
-        // 점프: Space / Gamepad "Jump" (Input Manager에서 A버튼 매핑)
+        // 점프 (2단)
         if (Input.GetButtonDown("Jump") && jumpCount < maxJumpCount)
         {
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
             jumpCount++;
-            anim?.SetTrigger("Jump");
         }
 
-        // 대시: Shift / Gamepad Button 1 (B버튼) — Input Manager "Dash" 축 추가 권장
+        // 대시
         if ((Input.GetKeyDown(KeyCode.LeftShift) || Input.GetKeyDown(KeyCode.RightShift)
              || Input.GetKeyDown(KeyCode.JoystickButton1)) && canDash)
         {
             StartCoroutine(DoDash());
         }
 
-        // State 갱신
+        // 이동 State 갱신
         if (!isDashing && !combat.IsLocked)
         {
             if (!IsGrounded)
@@ -122,17 +135,17 @@ public class PlayerController : MonoBehaviour
     {
         if (isDashing) return;
 
-        // 공격: J / Gamepad Button 2 (X버튼)
         if (Input.GetKeyDown(KeyCode.J) || Input.GetKeyDown(KeyCode.JoystickButton2))
             combat.TryAttack();
 
-        // 스킬1: K / Gamepad Button 3 (Y버튼)
         if (Input.GetKeyDown(KeyCode.K) || Input.GetKeyDown(KeyCode.JoystickButton3))
             combat.TrySkill1();
 
-        // 스킬2: L / Gamepad Button 5 (RB)
         if (Input.GetKeyDown(KeyCode.L) || Input.GetKeyDown(KeyCode.JoystickButton5))
             combat.TrySkill2();
+
+        if (Input.GetKeyDown(KeyCode.R) || Input.GetKeyDown(KeyCode.JoystickButton8))
+            combat.TryUltimate();
     }
 
     private IEnumerator DoDash()
@@ -172,13 +185,24 @@ public class PlayerController : MonoBehaviour
         State = newState;
     }
 
+    // ── 외부(Combat)에서 직접 애니메이션 재생 요청 ──
+    public void PlayAnim(string stateName, float normalizedTime = 0f)
+    {
+        anim?.Play(stateName, 0, normalizedTime);
+    }
+
+    public void PlayAttackAnim()  => anim?.Play(ANIM_ATTACK, 0, 0f);
+    public void PlaySkill1Anim()  => anim?.Play(ANIM_DASHATTACK, 0, 0f);
+    public void PlaySkill2Anim()  => anim?.Play(ANIM_ATTACK, 0, 0f);
+    public void PlayHurtAnim()    => anim?.Play(ANIM_HURT, 0, 0f);
+
     public void Die()
     {
         if (State == PlayerState.Dead) return;
         SetState(PlayerState.Dead);
         rb.linearVelocity = Vector2.zero;
         rb.gravityScale = 1f;
-        anim?.SetTrigger("Die");
+        anim?.Play(ANIM_DEATH, 0, 0f);
         StartCoroutine(DelayGameOver());
     }
 
@@ -188,13 +212,29 @@ public class PlayerController : MonoBehaviour
         GameManager.Instance?.TriggerGameOver();
     }
 
+    // ── 매 프레임 이동 State에 맞게 애니메이션 갱신 ──
     private void UpdateAnimator()
     {
         if (anim == null) return;
-        anim.SetFloat("MoveSpeed", Mathf.Abs(rb.linearVelocity.x));
-        anim.SetBool("IsGrounded", IsGrounded);
-        anim.SetFloat("VelocityY", rb.linearVelocity.y);
-        anim.SetBool("IsDashing", isDashing);
+        // 전투 중(IsLocked)이면 Combat이 직접 애니메이션 제어
+        if (combat.IsLocked) return;
+
+        string target = State switch
+        {
+            PlayerState.Idle => ANIM_IDLE,
+            PlayerState.Run  => ANIM_RUN,
+            PlayerState.Jump => ANIM_JUMP,
+            PlayerState.Fall => ANIM_FALL,
+            PlayerState.Dash => ANIM_DASH,
+            _                => ANIM_IDLE,
+        };
+
+        // 같은 State 반복 Play 방지
+        if (prevAnimState != State)
+        {
+            prevAnimState = State;
+            anim.Play(target, 0, 0f);
+        }
     }
 
     private void OnDrawGizmosSelected()

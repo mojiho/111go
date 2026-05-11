@@ -14,11 +14,13 @@ public class PlayerStats : MonoBehaviour
     private bool isInvincible;
     private PlayerController controller;
     private SpriteRenderer spriteRenderer;
+    private ParrySystem parrySystem;
 
     private void Awake()
     {
         controller = GetComponent<PlayerController>();
         spriteRenderer = GetComponent<SpriteRenderer>();
+        parrySystem = GetComponent<ParrySystem>();
         currentHp = maxHp;
     }
 
@@ -26,11 +28,19 @@ public class PlayerStats : MonoBehaviour
     {
         if (isInvincible || controller.State == PlayerState.Dead) return;
 
+        // 패링 성공 시 피해 무효
+        if (parrySystem != null && parrySystem.IsParrying)
+        {
+            parrySystem.OnSuccessfulParry();
+            return;
+        }
+
         currentHp = Mathf.Max(0f, currentHp - damage);
         OnHpChanged?.Invoke(currentHp, maxHp);
 
         HitEffectManager.Instance?.TriggerHitFlash(spriteRenderer);
         HitEffectManager.Instance?.TriggerScreenShake(0.15f, 0.25f);
+        controller.PlayHurtAnim();
 
         if (currentHp <= 0f)
         {
