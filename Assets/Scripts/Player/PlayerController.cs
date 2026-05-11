@@ -59,16 +59,12 @@ public class PlayerController : MonoBehaviour
     private bool canDash = true;
     private PlayerState prevAnimState;
 
-    // 애니메이터가 Scale 키프레임으로 덮어쓰는 것을 막기 위해 초기 스케일 저장
-    private Vector3 baseScale;
-
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
         anim = GetComponent<Animator>();
         combat = GetComponent<PlayerCombat>();
         stats = GetComponent<PlayerStats>();
-        baseScale = transform.localScale;   // 프리팹에 설정된 스케일(5,5,1) 기억
     }
 
     private void Update()
@@ -172,18 +168,13 @@ public class PlayerController : MonoBehaviour
         canDash = true;
     }
 
-    // 애니메이터가 Scale을 덮어쓰므로 LateUpdate에서 매 프레임 복원
-    private void LateUpdate()
-    {
-        transform.localScale = new Vector3(
-            FacingDirection * Mathf.Abs(baseScale.x),
-            baseScale.y,
-            baseScale.z);
-    }
-
     private void SetFacing(int dir)
     {
+        if (FacingDirection == dir) return;
         FacingDirection = dir;
+        // 클립에 X=5 구워넣었으므로 반전은 -5로
+        Vector3 s = transform.localScale;
+        transform.localScale = new Vector3(dir * Mathf.Abs(s.x), s.y, s.z);
     }
 
     public void SetState(PlayerState newState)
