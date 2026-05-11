@@ -1,15 +1,16 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.InputSystem;
 
-// 슬로우모션 게이지 — Tab 홀드 / LB 홀드로 발동, 게이지 소진 시 해제
+// 슬로우모션 게이지 — Tab 홀드로 발동, 게이지 소진 시 해제
 public class SlowMotionSystem : MonoBehaviour
 {
     [Header("Settings")]
     public float maxGauge = 100f;
-    public float drainRate = 30f;           // 초당 소모량
+    public float drainRate = 30f;
     public float slowTimeScale = 0.3f;
-    public float transitionSpeed = 8f;      // timeScale 전환 속도
+    public float transitionSpeed = 8f;
 
     [Header("Audio")]
     public AudioClip activateClip;
@@ -19,7 +20,7 @@ public class SlowMotionSystem : MonoBehaviour
     public bool IsActive { get; private set; }
     public float GaugeRatio => CurrentGauge / maxGauge;
 
-    public UnityEvent<float> OnGaugeChanged;    // 0~1
+    public UnityEvent<float> OnGaugeChanged;
     public UnityEvent OnActivate;
     public UnityEvent OnDeactivate;
 
@@ -41,8 +42,10 @@ public class SlowMotionSystem : MonoBehaviour
 
     private void HandleInput()
     {
-        // Tab (홀드) / LB = JoystickButton4
-        bool held = Input.GetKey(KeyCode.Tab) || Input.GetKey(KeyCode.JoystickButton4);
+        if (Keyboard.current == null) return;
+
+        // Tab 홀드로 슬로우모션
+        bool held = Keyboard.current.tabKey.isPressed;
 
         if (held && CurrentGauge > 1f)
             TryActivate();
@@ -109,7 +112,6 @@ public class SlowMotionSystem : MonoBehaviour
         OnGaugeChanged?.Invoke(GaugeRatio);
     }
 
-    // 필살기(난격) 등에서 게이지를 소비할 때 사용
     public void ConsumeGauge(float amount)
     {
         CurrentGauge = Mathf.Max(0f, CurrentGauge - amount);
