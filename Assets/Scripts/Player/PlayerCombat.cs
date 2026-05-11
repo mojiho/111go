@@ -25,12 +25,13 @@ public class PlayerCombat : MonoBehaviour
     public float skill2Cooldown = 6f;
     public float skill2Knockback = 6f;
 
-    [Header("Ultimate - 난격 (R / 게이지 80% 필요)")]
+    [Header("Ultimate - 난격 (V / 게이지 전량 소비)")]
     public float ultimateRadius = 2.2f;
     public float ultimateDamage = 55f;
-    public int ultimateHitCount = 6;
+    public int ultimateHitCountMin = 4;   // 최소 게이지(ultimateMinGauge)일 때 히트수
+    public int ultimateHitCountMax = 10;  // 게이지 100% 일 때 히트수
     public float ultimateHitInterval = 0.08f;
-    public float ultimateGaugeCost = 80f;
+    public float ultimateMinGauge = 30f;  // 발동에 필요한 최소 게이지
     public LayerMask enemyLayer;
 
     [Header("Slow Gauge Gain")]
@@ -181,7 +182,7 @@ public class PlayerCombat : MonoBehaviour
     public void TryUltimate()
     {
         if (IsLocked || isUltimate) return;
-        if (slowMo == null || slowMo.CurrentGauge < ultimateGaugeCost) return;
+        if (slowMo == null || slowMo.CurrentGauge < ultimateMinGauge) return;
         StartCoroutine(DoUltimate());
     }
 
@@ -191,9 +192,13 @@ public class PlayerCombat : MonoBehaviour
         IsLocked = true;
         controller.SetState(PlayerState.Ultimate);
 
-        slowMo.ConsumeGauge(ultimateGaugeCost);
+        // 현재 게이지 전량 소비 → 게이지 비율로 히트수 결정
+        float gaugeRatio = slowMo.CurrentGauge / slowMo.maxGauge;
+        int hitCount = Mathf.RoundToInt(
+            Mathf.Lerp(ultimateHitCountMin, ultimateHitCountMax, gaugeRatio));
+        slowMo.ConsumeGauge(slowMo.CurrentGauge);
 
-        GetComponent<PlayerStats>()?.SetInvincible(ultimateHitCount * ultimateHitInterval + 0.5f);
+        GetComponent<PlayerStats>()?.SetInvincible(hitCount * ultimateHitInterval + 0.5f);
         float prevGravity = rb.gravityScale;
         rb.gravityScale = 0f;
         rb.linearVelocity = Vector2.zero;
@@ -204,7 +209,7 @@ public class PlayerCombat : MonoBehaviour
         yield return new WaitForSecondsRealtime(0.22f);
 
         // ── 난격 루프 ──
-        for (int i = 0; i < ultimateHitCount; i++)
+        for (int i = 0; i < hitCount; i++)
         {
             if (controller.State == PlayerState.Dead) break;
 
@@ -219,7 +224,6 @@ public class PlayerCombat : MonoBehaviour
                 float hitDir = enemy.transform.position.x > transform.position.x ? 1f : -1f;
                 enemy.TakeDamage(ultimateDamage, hitDir * 4f);
                 HitEffectManager.Instance?.SpawnHitEffect(enemy.transform.position);
-                slowMo?.AddGauge(3f);
             }
 
             HitEffectManager.Instance?.TriggerHitStop(0.05f);
@@ -248,5 +252,5 @@ public class PlayerCombat : MonoBehaviour
 
     public float Skill1CooldownRatio => skill1CoolTimer / skill1Cooldown;
     public float Skill2CooldownRatio => skill2CoolTimer / skill2Cooldown;
-    public bool UltimateReady => slowMo != null && slowMo.CurrentGauge >= ultimateGaugeCost && !isUltimate;
+    public bool UltimateReady => slowMo != null && slowMo.CurrentGauge >= ultimateMinGauge && !isUltimate;
 }

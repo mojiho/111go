@@ -9,11 +9,12 @@ public class UIManager : MonoBehaviour
     public Slider hpSlider;
     public TextMeshProUGUI hpText;
 
-    [Header("Slow Gauge")]
+    [Header("Slow / Ultimate Gauge (공유)")]
     public Slider slowGaugeSlider;
     public Image slowGaugeFill;
-    public Color gaugeFullColor = new Color(0.2f, 0.8f, 1f);
-    public Color gaugeEmptyColor = new Color(0.4f, 0.4f, 0.4f);
+    public Color gaugeEmptyColor   = new Color(0.4f, 0.4f, 0.4f);
+    public Color gaugeNormalColor  = new Color(0.2f, 0.8f, 1f);
+    public Color gaugeUltReadyColor = new Color(1f, 0.8f, 0.1f);  // 필살기 가능: 금색
 
     [Header("Skill Cooldown")]
     public Image skill1CooldownOverlay;
@@ -73,7 +74,13 @@ public class UIManager : MonoBehaviour
     {
         if (slowGaugeSlider != null) slowGaugeSlider.value = ratio;
         if (slowGaugeFill != null)
-            slowGaugeFill.color = Color.Lerp(gaugeEmptyColor, gaugeFullColor, ratio);
+        {
+            // 필살기 발동 가능이면 금색, 아니면 파란색
+            Color targetColor = (playerCombat != null && playerCombat.UltimateReady)
+                ? gaugeUltReadyColor
+                : Color.Lerp(gaugeEmptyColor, gaugeNormalColor, ratio);
+            slowGaugeFill.color = Color.Lerp(slowGaugeFill.color, targetColor, Time.unscaledDeltaTime * 8f);
+        }
     }
 
     private void UpdateSkillCooldowns()
