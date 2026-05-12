@@ -64,6 +64,12 @@ public class HitEffectManager : MonoBehaviour
         CameraController.Instance?.TriggerShake(duration, magnitude);
     }
 
+    // 슬래시 방향으로 약하게 편향된 셰이크
+    public void TriggerDirectionalShake(float duration, float magnitude, Vector2 direction, float bias = 0.7f)
+    {
+        CameraController.Instance?.TriggerDirectionalShake(duration, magnitude, direction, bias);
+    }
+
     // ───── 피격 플래시 ─────
     public void TriggerHitFlash(SpriteRenderer sr)
     {

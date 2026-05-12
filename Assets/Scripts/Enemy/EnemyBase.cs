@@ -60,13 +60,22 @@ public abstract class EnemyBase : MonoBehaviour
         rb.freezeRotation = true;
         rb.gravityScale = 3f;
 
-        // 적끼리 + 플레이어와 물리 충돌 무시 (통과)
+        // 적끼리는 레이어 단위로 무시해도 OK (적-적 트리거 없음)
         int enemyLayer  = LayerMask.NameToLayer("Enemy");
-        int playerLayer = LayerMask.NameToLayer("Player");
         if (enemyLayer >= 0)
             Physics2D.IgnoreLayerCollision(enemyLayer, enemyLayer, true);
-        if (enemyLayer >= 0 && playerLayer >= 0)
-            Physics2D.IgnoreLayerCollision(enemyLayer, playerLayer, true);
+
+        // ⚠️ 플레이어-적 레이어 무시는 사용하지 않음
+        //   → EnemyHitBox(트리거)의 OnTriggerEnter2D 까지 막혀서 적이 데미지를 못 줌
+        //   → 대신 본체 콜라이더(non-trigger)끼리만 IgnoreCollision으로 통과 처리
+        if (mainCol != null && playerObj != null)
+        {
+            foreach (var pc in playerObj.GetComponentsInChildren<Collider2D>())
+            {
+                if (pc.isTrigger) continue;   // 플레이어쪽 트리거(있다면)는 건드리지 않음
+                Physics2D.IgnoreCollision(mainCol, pc, true);
+            }
+        }
     }
 
     protected virtual void Update()
@@ -162,24 +171,30 @@ public abstract class EnemyBase : MonoBehaviour
         currentHp -= damage;
         HitEffectManager.Instance?.TriggerHitFlash(sr);
 
+        // 데미지 팝업 — 넉백 방향을 direction으로 사용
+        Vector3 popupDir = new Vector3(knockbackX, 0f, 0f);
+        DamagePopupManager.Instance?.ShowPopup(Mathf.RoundToInt(damage), BodyPosition + Vector2.up * 0.5f, popupDir);
+
         float actualKnockback = knockbackX * (1f - knockbackResistance);
         rb.linearVelocity = new Vector2(actualKnockback, rb.linearVelocity.y + 3f);
 
         if (currentHp <= 0f)
             Die();
         else
-            StartCoroutine(HurtRoutine());
+        {
+            StopCoroutine(nameof(HurtRoutine));   // 중첩 방지
+            StartCoroutine(nameof(HurtRoutine));
+        }
     }
 
     protected virtual IEnumerator HurtRoutine()
     {
-        EnemyState prev = State;
         State = EnemyState.Hurt;
         anim?.Play("Hurt", 0, 0f);
 
-        yield return new WaitForSeconds(0.15f);
+        yield return new WaitForSeconds(0.25f);
 
-        if (!isDead) State = prev == EnemyState.Hurt ? EnemyState.Chase : prev;
+        if (!isDead) SetState(EnemyState.Chase);
     }
 
     protected virtual void Die()
@@ -189,7 +204,7 @@ public abstract class EnemyBase : MonoBehaviour
         rb.linearVelocity = Vector2.zero;
 
         anim?.Play("Death", 0, 0f);
-        GetComponent<Collider2D>().enabled = false;
+        if (mainCol != null) mainCol.enabled = false;
 
         // 슬로우모션 게이지 보상
         FindFirstObjectByType<SlowMotionSystem>()?.AddGauge(isElite ? 30f : 10f);

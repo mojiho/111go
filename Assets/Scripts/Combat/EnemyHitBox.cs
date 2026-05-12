@@ -35,6 +35,10 @@ public class EnemyHitBox : MonoBehaviour
 
         PlayerStats ps = other.GetComponent<PlayerStats>();
         if (ps != null)
-            ps.TakeDamage(damage);
+        {
+            // 공격자(이 히트박스) → 플레이어 방향 = 카메라가 밀려야 할 방향
+            Vector2 hitDir = (Vector2)other.transform.position - (Vector2)transform.position;
+            ps.TakeDamage(damage, hitDir);
+        }
     }
 }

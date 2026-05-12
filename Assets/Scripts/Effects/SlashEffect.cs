@@ -9,6 +9,12 @@ public class SlashEffect : MonoBehaviour
     private float lifetime = 0.15f;
     private float startWidth = 0.25f;
     private Color startColor = Color.white;
+    private bool useGradient = true;   // 노랑→주황→빨강 그라데이션 사용 여부
+
+    // 그라데이션 색상 (양 끝 = 노랑, 중간 = 주황, 가운데 = 빨강)
+    private static readonly Color GRAD_YELLOW = new Color(1f, 0.95f, 0.2f, 1f);
+    private static readonly Color GRAD_ORANGE = new Color(1f, 0.55f, 0.05f, 1f);
+    private static readonly Color GRAD_RED    = new Color(1f, 0.15f, 0.05f, 1f);
 
     private void Awake()
     {
@@ -17,12 +23,16 @@ public class SlashEffect : MonoBehaviour
 
     // 정적 헬퍼 — 한 줄로 호출 가능
     public static void Spawn(Vector3 worldPos, float angleDeg, float length,
-                             Color color, float life = 0.15f, float width = 0.25f)
+                             Color color, float life = 0.15f, float width = 0.25f,
+                             bool gradient = true)
     {
         var go = new GameObject("SlashEffect");
-        go.transform.position = worldPos;
+        Vector3 p = worldPos;
+        p.z = 0f;
+        go.transform.position = p;
         var fx = go.AddComponent<SlashEffect>();
         fx.startColor = color;
+        fx.useGradient = gradient;
         fx.lifetime = life;
         fx.startWidth = width;
         fx.Init(angleDeg, length);
@@ -34,42 +44,54 @@ public class SlashEffect : MonoBehaviour
         float rad = angleDeg * Mathf.Deg2Rad;
         Vector3 dir = new Vector3(Mathf.Cos(rad), Mathf.Sin(rad), 0f);
         Vector3 center = transform.position;
-        center.z = 0f;   // 2D 카메라 앞에 확실히 보이게
         Vector3 a = center - dir * (length * 0.5f);
         Vector3 b = center + dir * (length * 0.5f);
 
+        // 위치 3개 (시작-중앙-끝) — 가운데가 두껍고 양끝이 뾰족하게 보간되도록
         lr.useWorldSpace = true;
-        lr.positionCount = 2;
+        lr.positionCount = 3;
         lr.SetPosition(0, a);
-        lr.SetPosition(1, b);
+        lr.SetPosition(1, center);
+        lr.SetPosition(2, b);
 
-        // LineRenderer 머티리얼 — 알파블렌딩이 되는 셰이더가 필요
-        // Sprites/Default는 URP에서도 호환 모드로 동작하지만 안전을 위해 fallback 체인
-        Shader sh = Shader.Find("Sprites/Default");
-        if (sh == null) sh = Shader.Find("Legacy Shaders/Particles/Alpha Blended");
-        if (sh == null) sh = Shader.Find("Universal Render Pipeline/Particles/Unlit");
-        if (sh == null) sh = Shader.Find("Universal Render Pipeline/Unlit");
-        var mat = new Material(sh);
-        // 1x1 흰색 텍스처 할당 — 일부 셰이더(Sprites/Default)는 텍스처 없으면 마젠타
-        var tex = new Texture2D(1, 1);
-        tex.SetPixel(0, 0, Color.white);
-        tex.Apply();
-        if (mat.HasProperty("_MainTex"))  mat.SetTexture("_MainTex", tex);
-        if (mat.HasProperty("_BaseMap"))  mat.SetTexture("_BaseMap", tex);
-        if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", startColor);
-        if (mat.HasProperty("_Color"))     mat.SetColor("_Color", startColor);
-        lr.material = mat;
+        lr.material = new Material(Shader.Find("Sprites/Default"));
 
-        lr.startWidth = startWidth;
-        lr.endWidth = startWidth * 0.3f;   // 끝쪽이 가늘게
-        lr.startColor = startColor;
-        lr.endColor = new Color(startColor.r, startColor.g, startColor.b, 0f);
-        lr.numCapVertices = 2;
-        lr.numCornerVertices = 2;
+        // widthCurve — 양 끝 0, 중앙 1 → 양쪽 끝이 날카로운 마름모/잎사귀 형태
+        lr.widthMultiplier = startWidth;
+        lr.widthCurve = new AnimationCurve(
+            new Keyframe(0f,   0f),
+            new Keyframe(0.5f, 1f),
+            new Keyframe(1f,   0f)
+        );
 
-        // sortingLayer "Character"가 없으면 기본 레이어 사용 — 안전 처리
-        if (SortingLayer.NameToID("Character") != 0)
-            lr.sortingLayerName = "Character";
+        if (useGradient)
+        {
+            // 노랑(끝) → 주황 → 빨강(중앙) → 주황 → 노랑(끝) 그라데이션
+            var grad = new Gradient();
+            grad.SetKeys(
+                new GradientColorKey[] {
+                    new GradientColorKey(GRAD_YELLOW, 0f),
+                    new GradientColorKey(GRAD_ORANGE, 0.25f),
+                    new GradientColorKey(GRAD_RED,    0.5f),
+                    new GradientColorKey(GRAD_ORANGE, 0.75f),
+                    new GradientColorKey(GRAD_YELLOW, 1f)
+                },
+                new GradientAlphaKey[] {
+                    new GradientAlphaKey(1f, 0f),
+                    new GradientAlphaKey(1f, 1f)
+                }
+            );
+            lr.colorGradient = grad;
+        }
+        else
+        {
+            lr.startColor = startColor;
+            lr.endColor   = startColor;
+        }
+        lr.numCapVertices = 0;        // 끝을 둥글게 만드는 캡 제거 — 뾰족하게
+        lr.numCornerVertices = 4;     // 가운데 꺾임은 부드럽게
+
+        lr.sortingLayerName = "Effect";
         lr.sortingOrder = 100;
 
         StartCoroutine(FadeAndDestroy());
@@ -78,16 +100,35 @@ public class SlashEffect : MonoBehaviour
     private IEnumerator FadeAndDestroy()
     {
         float t = 0f;
-        Color from = lr.startColor;
+        Color from = startColor;
+        Gradient baseGrad = useGradient ? lr.colorGradient : null;
         while (t < lifetime)
         {
             t += Time.unscaledDeltaTime;
-            float alpha = 1f - (t / lifetime);
-            lr.startColor = new Color(from.r, from.g, from.b, alpha);
-            lr.endColor   = new Color(from.r, from.g, from.b, 0f);
-            float w = Mathf.Lerp(startWidth, 0f, t / lifetime);
-            lr.startWidth = w;
-            lr.endWidth = w * 0.3f;
+            float k = t / lifetime;
+            float alpha = 1f - k;
+
+            if (useGradient)
+            {
+                // 그라데이션의 모든 알파키를 동일하게 페이드
+                var g = new Gradient();
+                g.SetKeys(
+                    baseGrad.colorKeys,
+                    new GradientAlphaKey[] {
+                        new GradientAlphaKey(alpha, 0f),
+                        new GradientAlphaKey(alpha, 1f)
+                    }
+                );
+                lr.colorGradient = g;
+            }
+            else
+            {
+                Color c = new Color(from.r, from.g, from.b, alpha);
+                lr.startColor = c;
+                lr.endColor   = c;
+            }
+
+            lr.widthMultiplier = Mathf.Lerp(startWidth, 0f, k);
             yield return null;
         }
         Destroy(gameObject);

@@ -132,7 +132,8 @@ public class EnemyEliteMelee : EnemyBase
         anim?.Play("Idle", 0, 0f);   // 윈드업 — 잠깐 멈춤
         yield return new WaitForSeconds(attackWindup * (isPhase2 ? 0.65f : 1f));
 
-        if (isDead) { isActing = false; yield break; }
+        // 윈드업 중 피격됐으면 공격 취소
+        if (isDead || State == EnemyState.Hurt) { isActing = false; yield break; }
 
         float dir = player != null
             ? (player.position.x > transform.position.x ? 1f : -1f)
@@ -181,7 +182,11 @@ public class EnemyEliteMelee : EnemyBase
         foreach (var col in cols)
         {
             PlayerStats ps = col.GetComponent<PlayerStats>();
-            if (ps != null) ps.TakeDamage(spinDamage);
+            if (ps != null)
+            {
+                Vector2 dir = (Vector2)col.transform.position - (Vector2)transform.position;
+                ps.TakeDamage(spinDamage, dir);
+            }
         }
 
         HitEffectManager.Instance?.TriggerScreenShake(0.12f, 0.25f);

@@ -8,6 +8,13 @@ public class PlayerStats : MonoBehaviour
     public float maxHp = 200f;
     public float currentHp { get; private set; }
 
+    [Header("Screen Shake — On Hurt")]
+    public float hurtShakeDuration  = 0.2f;
+    public float hurtShakeMagnitudeMin = 0.22f;   // 작은 피해
+    public float hurtShakeMagnitudeMax = 0.4f;    // 큰 피해 (damage 50 기준)
+    public float hurtShakeDamageRef = 50f;        // magnitudeMax 도달 기준 데미지
+    [Range(0f, 1f)] public float hurtShakeBias = 0.85f;
+
     public UnityEvent<float, float> OnHpChanged;   // current, max
     public UnityEvent OnDead;
 
@@ -24,7 +31,9 @@ public class PlayerStats : MonoBehaviour
         currentHp = maxHp;
     }
 
-    public void TakeDamage(float damage)
+    public void TakeDamage(float damage) => TakeDamage(damage, Vector2.zero);
+
+    public void TakeDamage(float damage, Vector2 hitDirection)
     {
         if (isInvincible || controller.State == PlayerState.Dead) return;
 
@@ -39,7 +48,15 @@ public class PlayerStats : MonoBehaviour
         OnHpChanged?.Invoke(currentHp, maxHp);
 
         HitEffectManager.Instance?.TriggerHitFlash(spriteRenderer);
-        HitEffectManager.Instance?.TriggerScreenShake(0.15f, 0.25f);
+
+        // 피격 셰이크 — 데미지 비율 따라 강도 가변 (Inspector 노출값 사용)
+        float hitMag = Mathf.Lerp(hurtShakeMagnitudeMin, hurtShakeMagnitudeMax,
+                                  Mathf.Clamp01(damage / Mathf.Max(0.01f, hurtShakeDamageRef)));
+        if (hitDirection.sqrMagnitude > 0.0001f)
+            HitEffectManager.Instance?.TriggerDirectionalShake(hurtShakeDuration, hitMag, hitDirection, hurtShakeBias);
+        else
+            HitEffectManager.Instance?.TriggerScreenShake(hurtShakeDuration, hitMag);
+
         controller.PlayHurtAnim();
 
         if (currentHp <= 0f)

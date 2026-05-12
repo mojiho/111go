@@ -37,7 +37,10 @@ public class CameraController : MonoBehaviour
 
     private Vector3 shakeOffset;
     private float shakeTimer;
+    private float shakeDuration;     // 시작 시 지정한 전체 지속시간 (감쇠 보정용)
     private float shakeMagnitude;
+    private Vector2 shakeDirection;  // 셰이크 편향 방향 (0벡터면 등방성 랜덤)
+    private float shakeDirBias;      // 0=완전 랜덤, 1=완전 방향성
 
     private Rigidbody2D targetRb;
     private PlayerController playerCtrl;
@@ -66,8 +69,8 @@ public class CameraController : MonoBehaviour
         if (target == null) return;
 
         UpdateLookAhead();
+        UpdateShake();       // 셰이크 먼저 — FollowTarget에서 최신 offset 사용
         FollowTarget();
-        UpdateShake();
     }
 
     private void UpdateLookAhead()
@@ -117,11 +120,38 @@ public class CameraController : MonoBehaviour
     {
         if (shakeTimer > 0f)
         {
-            shakeTimer -= Time.unscaledDeltaTime;
-            float t = Mathf.Clamp01(shakeTimer / shakeMagnitude);
-            shakeOffset = (Vector3)Random.insideUnitCircle * (shakeMagnitude * t);
+            // ★ HitStop(Time.timeScale=0) 중에는 타이머를 멈춰서 셰이크가 묻히지 않게 함
+            if (Time.timeScale > 0.01f)
+                shakeTimer -= Time.unscaledDeltaTime;
+
+            float t01 = (shakeDuration > 0f)
+                ? 1f - Mathf.Clamp01(shakeTimer / shakeDuration)   // 0→1 진행도
+                : 1f;
+            // 감쇠 — 시작은 강하게, 끝으로 갈수록 약하게
+            float decayAmp = Mathf.Pow(1f - t01, 1.4f) * shakeMagnitude;
+
+            Vector2 offset;
+            if (shakeDirection.sqrMagnitude > 0.0001f)
+            {
+                // 방향성: 초기 확 밀림(kick) + 천천히 진동하며 복귀
+                // 진동수 18Hz — 눈으로 명확히 보이는 속도
+                float elapsed = shakeDuration - shakeTimer;
+                float phase = elapsed * 18f;
+                // cos 사용 → t=0일 때 1 (즉시 최대 변위), 점차 진동하며 감쇠
+                float along = Mathf.Cos(phase);
+                float side  = Mathf.Sin(phase * 1.7f) * 0.2f;
+                Vector2 perp = new Vector2(-shakeDirection.y, shakeDirection.x);
+                offset = shakeDirection * along + perp * side;
+            }
+            else
+            {
+                // 등방성: 매 프레임 랜덤 방향
+                offset = Random.insideUnitCircle;
+            }
+
+            shakeOffset = (Vector3)offset * decayAmp;
         }
-        else
+        else if (shakeOffset.sqrMagnitude > 0.0001f)
         {
             shakeOffset = Vector3.MoveTowards(shakeOffset, Vector3.zero, shakeDecay * Time.unscaledDeltaTime);
         }
@@ -129,11 +159,23 @@ public class CameraController : MonoBehaviour
 
     public void TriggerShake(float duration, float magnitude)
     {
-        if (magnitude > shakeMagnitude || shakeTimer <= 0f)
-        {
-            shakeTimer   = duration;
-            shakeMagnitude = magnitude;
-        }
+        // 항상 덮어쓰기 — 새 셰이크가 더 약해도 새로 시작 (연타 시 묻히지 않게)
+        shakeTimer     = duration;
+        shakeDuration  = duration;
+        shakeMagnitude = magnitude;
+        shakeDirection = Vector2.zero;
+        shakeDirBias   = 0f;
+    }
+
+    // 방향성 셰이크 — direction 방향으로 편향된 흔들림
+    // bias: 0=완전 랜덤, 1=완전 방향성 (권장 0.7)
+    public void TriggerDirectionalShake(float duration, float magnitude, Vector2 direction, float bias = 0.7f)
+    {
+        shakeTimer     = duration;
+        shakeDuration  = duration;
+        shakeMagnitude = magnitude;
+        shakeDirection = direction.sqrMagnitude > 0.0001f ? direction.normalized : Vector2.zero;
+        shakeDirBias   = Mathf.Clamp01(bias);
     }
 
     public void TriggerScreenShake(float duration, float magnitude) => TriggerShake(duration, magnitude);

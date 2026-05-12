@@ -56,7 +56,8 @@ public class Projectile : MonoBehaviour
             PlayerStats player = other.GetComponent<PlayerStats>();
             if (player != null)
             {
-                player.TakeDamage(damage);
+                // 발사체 진행 방향으로 셰이크
+                player.TakeDamage(damage, direction);
                 if (hitEffectPrefab != null)
                     Instantiate(hitEffectPrefab, transform.position, Quaternion.identity);
                 Destroy(gameObject);

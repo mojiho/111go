@@ -2,7 +2,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public enum PlayerState { Idle, Run, Jump, Fall, Dash, Attack, Skill1, Skill2, Ultimate, Parry, Crouch, Dead }
+public enum PlayerState { Idle, Run, Jump, Fall, Dash, Attack, Skill1, Skill2, Ultimate, Parry, Crouch, Hurt, Dead }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 //  조작키 (New Input System)
@@ -58,6 +58,7 @@ public class PlayerController : MonoBehaviour
     private const string ANIM_HURT       = "Hurt";
     private const string ANIM_DEATH      = "Death";
     private const string ANIM_CROUCH     = "Croush";
+    private const string ANIM_SLIDE      = "Slide";
 
     private Rigidbody2D rb;
     private Animator anim;
@@ -69,6 +70,8 @@ public class PlayerController : MonoBehaviour
     private int jumpCount;
     private bool isDashing;
     private bool canDash = true;
+    private float dashCoolTimer = 0f;
+    public float DashCooldownRatio => dashCooldown > 0f ? Mathf.Clamp01(dashCoolTimer / dashCooldown) : 0f;
     private bool isCrouching;
     private Vector2 capsuleOriginalSize;
     private Vector2 capsuleOriginalOffset;
@@ -172,8 +175,8 @@ public class PlayerController : MonoBehaviour
             StartCoroutine(DoDash());
         }
 
-        // State 갱신
-        if (!isDashing && !combat.IsLocked)
+        // State 갱신 — Hurt 중엔 HurtRecoverRoutine이 복귀 담당
+        if (!isDashing && !combat.IsLocked && State != PlayerState.Hurt)
         {
             if (!IsGrounded)
                 SetState(rb.linearVelocity.y > 0.1f ? PlayerState.Jump : PlayerState.Fall);
@@ -228,12 +231,21 @@ public class PlayerController : MonoBehaviour
     {
         canDash = false;
         isDashing = true;
+        bool dashGrounded = IsGrounded;
         SetState(PlayerState.Dash);
 
         float dir = moveInput != 0 ? Mathf.Sign(moveInput) : FacingDirection;
         SetFacing((int)dir);
         rb.gravityScale = 0f;
-        rb.linearVelocity = new Vector2(dir * dashSpeed, 0f);
+
+        if (dashGrounded)
+            rb.linearVelocity = new Vector2(dir * dashSpeed, -0.5f);  // Y 눌러서 떠오름 방지
+        else
+            rb.linearVelocity = new Vector2(dir * dashSpeed, 0f);
+
+        // 지상 = Slide, 공중 = Dash 애니메이션 직접 재생
+        anim?.Play(dashGrounded ? ANIM_SLIDE : ANIM_DASH, 0, 0f);
+        prevAnimState = PlayerState.Dash;
 
         stats.SetInvincible(dashDuration + 0.05f);
         HitEffectManager.Instance?.TriggerDashEffect(transform.position, dir);
@@ -243,8 +255,15 @@ public class PlayerController : MonoBehaviour
         rb.gravityScale = 3f;
         rb.linearVelocity = new Vector2(rb.linearVelocity.x * 0.2f, 0f);
         isDashing = false;
+        SetState(PlayerState.Idle);   // 대시 끝난 직후 명시적으로 Idle 세팅 → Run이 덮지 못하게
 
-        yield return new WaitForSeconds(dashCooldown);
+        dashCoolTimer = dashCooldown;
+        while (dashCoolTimer > 0f)
+        {
+            dashCoolTimer -= Time.unscaledDeltaTime;
+            yield return null;
+        }
+        dashCoolTimer = 0f;
         canDash = true;
     }
 
@@ -281,10 +300,26 @@ public class PlayerController : MonoBehaviour
         anim?.Play(ANIM_ATTACK2, 0, 0f);   // 스킬2는 Attack2로 차별화
         prevAnimState = PlayerState.Skill2;
     }
+    private bool hurtPending;
+
     public void PlayHurtAnim()
     {
-        anim?.Play(ANIM_HURT, 0, 0f);
-        prevAnimState = PlayerState.Parry;
+        // 대시/스킬/공격 중이더라도 피격이 우위 — 강제 중단
+        isDashing = false;
+        combat.ForceUnlock();
+        rb.gravityScale = 3f;
+
+        hurtPending = true;
+        SetState(PlayerState.Hurt);
+        StopCoroutine(nameof(HurtRecoverRoutine));
+        StartCoroutine(nameof(HurtRecoverRoutine));
+    }
+
+    private IEnumerator HurtRecoverRoutine()
+    {
+        yield return new WaitForSeconds(0.3f);
+        if (State == PlayerState.Hurt)
+            SetState(PlayerState.Idle);
     }
 
     public void Die()
@@ -306,6 +341,18 @@ public class PlayerController : MonoBehaviour
     private void UpdateAnimator()
     {
         if (anim == null) return;
+
+        // Hurt — 플래그 방식으로 Update 내에서 즉시 재생 (FixedUpdate에서 호출 시 딜레이 방지)
+        if (hurtPending)
+        {
+            hurtPending = false;
+            prevAnimState = PlayerState.Hurt;
+            anim.Play(ANIM_HURT, 0, 0f);
+            return;
+        }
+
+        if (State == PlayerState.Hurt) return;
+
         if (combat.IsLocked) return;
 
         string target = State switch
@@ -314,7 +361,7 @@ public class PlayerController : MonoBehaviour
             PlayerState.Run    => ANIM_RUN,
             PlayerState.Jump   => ANIM_JUMP,
             PlayerState.Fall   => ANIM_FALL,
-            PlayerState.Dash   => ANIM_DASH,
+            PlayerState.Dash   => ANIM_SLIDE,
             PlayerState.Crouch => ANIM_CROUCH,
             _                  => ANIM_IDLE,
         };
