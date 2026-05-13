@@ -21,8 +21,9 @@ public class UIManager : MonoBehaviour
     public SkillCard skill2Card;   // C키 — 회전베기
     public SkillCard parryCard;    // Shift 키 — 패링
     public SkillCard deshCard;     // ctrl 키 - 대쉬
+    public SkillCard ultimateCard; // V키 — 필살기 (게이지가 곧 쿨다운 역할)
 
-    [Header("Ultimate Ready")]
+    [Header("Ultimate Ready (legacy — ultimateCard 사용 시 비워둬도 됨)")]
     public GameObject ultimateReadyIndicator;   // 필살기 준비됐을 때 활성화
 
     [Header("Wave Info")]
@@ -67,6 +68,8 @@ public class UIManager : MonoBehaviour
         skill2Card?.Setup(null, "C",    playerCombat.skill2Cooldown);
         parryCard?.Setup(null,  "S",    parrySystem      != null ? parrySystem.parryCooldown     : 3f);
         deshCard?.Setup(null,   "Ctrl", playerController != null ? playerController.dashCooldown : 0.7f);
+        // 필살기 카드 — "쿨다운 텍스트"가 필요한 게이지 수치를 보여주도록 maxCooldown = 필요 게이지
+        ultimateCard?.Setup(null, "V",  playerCombat.ultimateMinGauge);
 
         // 게이지 슬라이더
         slowMo = FindFirstObjectByType<SlowMotionSystem>();
@@ -126,14 +129,16 @@ public class UIManager : MonoBehaviour
     {
         if (playerCombat == null) return;
 
+        // ultimateCard 사용 시 indicator는 숨김 (둘 다 켜져있을 필요 X)
         if (ultimateReadyIndicator != null)
-            ultimateReadyIndicator.SetActive(playerCombat.UltimateReady);
+            ultimateReadyIndicator.SetActive(ultimateCard == null && playerCombat.UltimateReady);
 
         // SkillCard 쿨타임 갱신
         skill1Card?.SetCooldown(playerCombat.Skill1CooldownRatio);
         skill2Card?.SetCooldown(playerCombat.Skill2CooldownRatio);
         parryCard?.SetCooldown(parrySystem      != null ? parrySystem.CooldownRatio           : 0f);
         deshCard?.SetCooldown(playerController  != null ? playerController.DashCooldownRatio  : 0f);
+        ultimateCard?.SetCooldown(playerCombat.UltimateChargeRatio);
     }
 
     // 게이지/HP 모두 이벤트 외에 매 프레임 직접 갱신 (이벤트 누락 방지)

@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.UI;
 
 public enum EnemyState { Idle, Chase, Attack, Hurt, Dead }
 
@@ -27,7 +28,66 @@ public abstract class EnemyBase : MonoBehaviour
     [Header("Knockback")]
     public float knockbackResistance = 0f;   // 0 = 풀 넉백, 1 = 무효
 
+    [Header("HP Bar")]
+    public Slider hpSlider;                 // 자식 Canvas 아래 Slider 드래그
+    public bool hideHpBarWhenFull = true;   // 풀피일 땐 숨김
+    public CanvasGroup hpBarCanvasGroup;    // (선택) 페이드용
+    public Transform hpBarFollow;           // 위치를 따라갈 Transform — 보통 Canvas (또는 Slider) 드래그
+    public Vector2 hpBarOffset = new Vector2(0f, 1.2f);  // centerPoint 기준 오프셋
+
+    [Header("Freeze Pose (필살기 연출용)")]
+    [Tooltip("Freeze 시 재생할 Animator State 이름 (적별로 다를 수 있음)")]
+    public string frozenHurtStateName = "Hurt";
+    [Range(0f, 1f)] public float frozenHurtNormalizedTime = 0.3f;
+
+    [Header("Hit Stun")]
+    [Tooltip("피격 후 짧게 아무것도 못하는 시간 (행동 불가)")]
+    public float postHitStunDuration = 0.05f;
+    private float _hitStunTimer;
+    public bool IsHitStunned => _hitStunTimer > 0f;
+
     public EnemyState State { get; protected set; }
+
+    // 필살기 연출 — freeze 상태
+    private bool _isFrozen;
+    private Vector2 _frozenVel;
+    private float _frozenAnimSpeed = 1f;
+    private float _frozenGravity;
+    public bool IsFrozen => _isFrozen;
+
+    public void SetFrozen(bool freeze)
+    {
+        if (_isFrozen == freeze) return;
+        _isFrozen = freeze;
+        if (freeze)
+        {
+            _frozenVel = rb.linearVelocity;
+            _frozenAnimSpeed = anim != null ? anim.speed : 1f;
+            _frozenGravity = rb.gravityScale;
+            rb.linearVelocity = Vector2.zero;
+            rb.gravityScale = 0f;
+            if (anim != null && anim.runtimeAnimatorController != null)
+            {
+                // 적의 Hurt 포즈에서 정지
+                anim.Play(frozenHurtStateName, 0, frozenHurtNormalizedTime);
+                anim.Update(0f);
+                anim.speed = 0f;
+            }
+        }
+        else
+        {
+            rb.linearVelocity = _frozenVel;
+            rb.gravityScale = _frozenGravity;
+            if (anim != null) anim.speed = _frozenAnimSpeed;
+        }
+    }
+
+    // 모든 적 freeze (필살기 연출용)
+    public static void FreezeAll(bool freeze)
+    {
+        foreach (var e in FindObjectsByType<EnemyBase>(FindObjectsSortMode.None))
+            e.SetFrozen(freeze);
+    }
 
     protected Rigidbody2D rb;
     protected Animator anim;
@@ -60,6 +120,17 @@ public abstract class EnemyBase : MonoBehaviour
         rb.freezeRotation = true;
         rb.gravityScale = 3f;
 
+        // HP 슬라이더 초기화
+        if (hpSlider != null)
+        {
+            hpSlider.minValue = 0f;
+            hpSlider.maxValue = 1f;
+            hpSlider.wholeNumbers = false;
+            hpSlider.interactable = false;
+            hpSlider.value = 1f;
+        }
+        UpdateHpBarVisibility();
+
         // 적끼리는 레이어 단위로 무시해도 OK (적-적 트리거 없음)
         int enemyLayer  = LayerMask.NameToLayer("Enemy");
         if (enemyLayer >= 0)
@@ -81,8 +152,28 @@ public abstract class EnemyBase : MonoBehaviour
     protected virtual void Update()
     {
         if (isDead) return;
+        if (_isFrozen) return;   // 필살기 연출 중 정지
+
+        if (_hitStunTimer > 0f)
+        {
+            _hitStunTimer -= Time.deltaTime;
+            // Stun 중엔 AI/이동 결정만 skip — velocity는 그대로 두어 넉백 유지
+            return;
+        }
+
         UpdateFacing();
         UpdateStateMachine();
+    }
+
+    protected virtual void LateUpdate()
+    {
+        // HP바를 centerPoint(또는 root) + offset 위치에 강제 정렬
+        // — 부모 자식 관계와 무관하게 절대 좌표로 위치 고정 → flip 시 따라 흔들리지 않음
+        if (hpBarFollow != null)
+        {
+            Vector3 basePos = centerPoint != null ? centerPoint.position : transform.position;
+            hpBarFollow.position = new Vector3(basePos.x + hpBarOffset.x, basePos.y + hpBarOffset.y, basePos.z);
+        }
     }
 
     protected abstract void UpdateStateMachine();
@@ -170,6 +261,8 @@ public abstract class EnemyBase : MonoBehaviour
 
         currentHp -= damage;
         HitEffectManager.Instance?.TriggerHitFlash(sr);
+        UpdateHpBar();
+        _hitStunTimer = postHitStunDuration;   // 매 피격마다 짧은 stun
 
         // 데미지 팝업 — 넉백 방향을 direction으로 사용
         Vector3 popupDir = new Vector3(knockbackX, 0f, 0f);
@@ -206,6 +299,8 @@ public abstract class EnemyBase : MonoBehaviour
         anim?.Play("Death", 0, 0f);
         if (mainCol != null) mainCol.enabled = false;
 
+        if (hpSlider != null) hpSlider.gameObject.SetActive(false);
+
         // 슬로우모션 게이지 보상
         FindFirstObjectByType<SlowMotionSystem>()?.AddGauge(isElite ? 30f : 10f);
 
@@ -224,6 +319,28 @@ public abstract class EnemyBase : MonoBehaviour
             case EnemyState.Idle:   anim?.Play("Idle",   0, 0f); break;
             case EnemyState.Chase:  anim?.Play("Walk",   0, 0f); break;
             case EnemyState.Attack: anim?.Play("Attack", 0, 0f); break;
+        }
+    }
+
+    protected void UpdateHpBar()
+    {
+        if (hpSlider != null && maxHp > 0f)
+            hpSlider.value = Mathf.Clamp01(currentHp / maxHp);
+        UpdateHpBarVisibility();
+    }
+
+    protected void UpdateHpBarVisibility()
+    {
+        if (hpSlider == null) return;
+        bool full = currentHp >= maxHp - 0.01f;
+        bool show = !(hideHpBarWhenFull && full);
+        if (hpBarCanvasGroup != null)
+        {
+            hpBarCanvasGroup.alpha = show ? 1f : 0f;
+        }
+        else
+        {
+            hpSlider.gameObject.SetActive(show);
         }
     }
 

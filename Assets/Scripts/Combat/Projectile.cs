@@ -11,6 +11,30 @@ public class Projectile : MonoBehaviour
     private Vector2 direction;
     private Rigidbody2D rb;
 
+    private bool _isFrozen;
+    private Vector2 _frozenVel;
+    public void SetFrozen(bool freeze)
+    {
+        if (_isFrozen == freeze) return;
+        _isFrozen = freeze;
+        if (freeze)
+        {
+            _frozenVel = rb != null ? rb.linearVelocity : Vector2.zero;
+            if (rb != null) rb.linearVelocity = Vector2.zero;
+        }
+        else
+        {
+            if (rb != null) rb.linearVelocity = _frozenVel;
+            else if (direction != Vector2.zero) { /* rb-less는 Update 멈춰있다가 자연 재개 */ }
+        }
+    }
+
+    public static void FreezeAll(bool freeze)
+    {
+        foreach (var p in FindObjectsByType<Projectile>(FindObjectsSortMode.None))
+            p.SetFrozen(freeze);
+    }
+
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -35,6 +59,7 @@ public class Projectile : MonoBehaviour
 
     private void Update()
     {
+        if (_isFrozen) return;
         if (rb == null)
             transform.position += (Vector3)(direction * speed * Time.deltaTime);
     }

@@ -1,12 +1,19 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.UI;
 
 public class PlayerStats : MonoBehaviour
 {
     [Header("Stats")]
     public float maxHp = 200f;
     public float currentHp { get; private set; }
+
+    [Header("World-Space HP Bar (선택)")]
+    public Slider worldHpSlider;            // 머리 위 슬라이더
+    public bool hideWorldHpBarWhenFull = true;
+    public CanvasGroup worldHpBarCanvasGroup;
+    public Transform worldHpBarRoot;        // 좌우반전 보정 대상 — 보통 Canvas 자체 드래그
 
     [Header("Screen Shake — On Hurt")]
     public float hurtShakeDuration  = 0.2f;
@@ -29,6 +36,53 @@ public class PlayerStats : MonoBehaviour
         spriteRenderer = GetComponent<SpriteRenderer>();
         parrySystem = GetComponent<ParrySystem>();
         currentHp = maxHp;
+
+        if (worldHpSlider != null)
+        {
+            worldHpSlider.minValue = 0f;
+            worldHpSlider.maxValue = 1f;
+            worldHpSlider.wholeNumbers = false;
+            worldHpSlider.interactable = false;
+            worldHpSlider.value = 1f;
+        }
+        UpdateWorldHpBarVisibility();
+    }
+
+    private void UpdateWorldHpBar()
+    {
+        if (worldHpSlider != null && maxHp > 0f)
+            worldHpSlider.value = Mathf.Clamp01(currentHp / maxHp);
+        UpdateWorldHpBarVisibility();
+    }
+
+    private void LateUpdate()
+    {
+        // worldHpBarRoot가 비어있으면 슬라이더 부모 중 Canvas를 자동 탐색
+        if (worldHpBarRoot == null && worldHpSlider != null)
+        {
+            Canvas c = worldHpSlider.GetComponentInParent<Canvas>();
+            if (c != null) worldHpBarRoot = c.transform;
+        }
+        if (worldHpBarRoot == null) return;
+
+        // 부모(플레이어)가 transform.localScale.x로 좌우반전 → 자식 Canvas도 거꾸로 됨
+        // 자식 localScale.x 부호를 부모와 같게 두면 lossyScale.x가 항상 양수 → 정방향 유지
+        float parentSignX = Mathf.Sign(transform.localScale.x);
+        if (parentSignX == 0f) parentSignX = 1f;
+        Vector3 s = worldHpBarRoot.localScale;
+        s.x = Mathf.Abs(s.x) * parentSignX;
+        worldHpBarRoot.localScale = s;
+    }
+
+    private void UpdateWorldHpBarVisibility()
+    {
+        if (worldHpSlider == null) return;
+        bool full = currentHp >= maxHp - 0.01f;
+        bool show = !(hideWorldHpBarWhenFull && full);
+        if (worldHpBarCanvasGroup != null)
+            worldHpBarCanvasGroup.alpha = show ? 1f : 0f;
+        else
+            worldHpSlider.gameObject.SetActive(show);
     }
 
     public void TakeDamage(float damage) => TakeDamage(damage, Vector2.zero);
@@ -46,6 +100,7 @@ public class PlayerStats : MonoBehaviour
 
         currentHp = Mathf.Max(0f, currentHp - damage);
         OnHpChanged?.Invoke(currentHp, maxHp);
+        UpdateWorldHpBar();
 
         HitEffectManager.Instance?.TriggerHitFlash(spriteRenderer);
 
@@ -87,5 +142,6 @@ public class PlayerStats : MonoBehaviour
     {
         currentHp = Mathf.Min(maxHp, currentHp + amount);
         OnHpChanged?.Invoke(currentHp, maxHp);
+        UpdateWorldHpBar();
     }
 }

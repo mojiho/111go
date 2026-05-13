@@ -248,11 +248,6 @@ public class PlayerController : MonoBehaviour
         SetFacing((int)dir);
         rb.gravityScale = 0f;
 
-        if (dashGrounded)
-            rb.linearVelocity = new Vector2(dir * dashSpeed, -0.5f);  // Y 눌러서 떠오름 방지
-        else
-            rb.linearVelocity = new Vector2(dir * dashSpeed, 0f);
-
         // 지상 = Slide, 공중 = Dash 애니메이션 직접 재생
         anim?.Play(dashGrounded ? ANIM_SLIDE : ANIM_DASH, 0, 0f);
         prevAnimState = PlayerState.Dash;
@@ -261,10 +256,22 @@ public class PlayerController : MonoBehaviour
         HitEffectManager.Instance?.TriggerDashEffect(transform.position, dir);
         SpawnShockWaveBehind();
 
-        yield return new WaitForSeconds(dashDuration);
+        // 진행 중 매 프레임 Y 강제 — 단차/경사면에 의한 떠오름 방지
+        float elapsed = 0f;
+        while (elapsed < dashDuration)
+        {
+            if (dashGrounded)
+                rb.linearVelocity = new Vector2(dir * dashSpeed, -2f);  // 지상은 강하게 누름
+            else
+                rb.linearVelocity = new Vector2(dir * dashSpeed, rb.linearVelocity.y);
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
 
         rb.gravityScale = 3f;
-        rb.linearVelocity = new Vector2(rb.linearVelocity.x * 0.2f, 0f);
+        // 종료 시 Y=0이면 중력 가속까지 한 프레임 떠 보임 → 즉시 음수 Y 부여
+        float endY = dashGrounded ? -5f : rb.linearVelocity.y;
+        rb.linearVelocity = new Vector2(rb.linearVelocity.x * 0.2f, endY);
         isDashing = false;
         SetState(PlayerState.Idle);   // 대시 끝난 직후 명시적으로 Idle 세팅 → Run이 덮지 못하게
 
@@ -330,6 +337,21 @@ public class PlayerController : MonoBehaviour
     {
         anim?.Play(ANIM_DASHATTACK, 0, 0f);
         prevAnimState = PlayerState.Skill1;
+    }
+
+    // 필살기 연출용 — Dash-Attack 포즈 고정 / 해제
+    public void FreezeAtDashAttackPose(float normalizedTime = 0.35f)
+    {
+        if (anim == null) return;
+        anim.Play(ANIM_DASHATTACK, 0, normalizedTime);
+        anim.Update(0f);
+        anim.speed = 0f;
+        prevAnimState = PlayerState.Skill1;
+    }
+
+    public void UnfreezeAnimator()
+    {
+        if (anim != null) anim.speed = 1f;
     }
     public void PlaySkill2Anim()
     {

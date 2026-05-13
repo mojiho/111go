@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -32,12 +33,16 @@ public class PlayerCombat : MonoBehaviour
     public Vector2 skill2EffectOffset = new Vector2(0f, 0f);  // 발 위치 기준 오프셋
 
     [Header("Ultimate - 난격 (V / 게이지 전량 소비)")]
-    public float ultimateRadius = 2.2f;
+    public HitBox ultimateHitBox;         // Warrior 자식 UltimateHitBox 연결
+    public float ultimateActiveWindow = 0.04f;  // 한 틱당 히트박스 활성 시간
     public float ultimateDamage = 55f;
     public int ultimateHitCountMin = 4;   // 최소 게이지(ultimateMinGauge)일 때 히트수
     public int ultimateHitCountMax = 10;  // 게이지 100% 일 때 히트수
     public float ultimateHitInterval = 0.08f;
     public float ultimateMinGauge = 30f;  // 발동에 필요한 최소 게이지
+    public float ultimateKnockback = 4f;
+    [Tooltip("(레거시) ultimateHitBox 비어있을 때 fallback OverlapCircle 반경")]
+    public float ultimateRadius = 2.2f;
     public LayerMask enemyLayer;
 
     [Header("Slow Gauge Gain")]
@@ -81,6 +86,7 @@ public class PlayerCombat : MonoBehaviour
         foreach (var hb in comboHitBoxes) hb?.Deactivate();
         skill1HitBox?.Deactivate();
         skill2HitBox?.Deactivate();
+        ultimateHitBox?.Deactivate();
         StopAllCoroutines();
     }
 
@@ -211,17 +217,9 @@ public class PlayerCombat : MonoBehaviour
         bool wasGrounded = controller.IsGrounded;
 
         if (wasGrounded)
-        {
-            // 지상: 수평 돌진 — Y를 약간 음수로 눌러서 경사/계단 충돌 후 튀어오름 방지
             rb.gravityScale = 0f;
-            rb.linearVelocity = new Vector2(dir * skill1DashSpeed, -0.5f);
-        }
         else
-        {
-            // 공중: 중력 강화 + 수평 속도 부여 → 빠르게 대각선 낙하
             rb.gravityScale = deshGravityScale;
-            rb.linearVelocity = new Vector2(dir * skill1DashSpeed, rb.linearVelocity.y);
-        }
 
         // 슬래시 각도 — 지상은 가로(0°), 공중은 진행방향 기준 완만한 대각선 (-20°: 오른쪽 기준)
         float slashAngle = wasGrounded ? 0f : -20f * dir;
@@ -232,11 +230,23 @@ public class PlayerCombat : MonoBehaviour
         // 대쉬 시작과 동시에 히트박스 활성 (터널링 방지)
         skill1HitBox?.Activate(skill1Damage, skill1Knockback * dir, OnHitEnemySkill1);
 
-        yield return new WaitForSeconds(skill1Duration);
+        // 진행 중 매 프레임 Y 강제 — 단차/경사면에 의한 떠오름 방지 (지상 한정)
+        float elapsed = 0f;
+        while (elapsed < skill1Duration)
+        {
+            if (wasGrounded)
+                rb.linearVelocity = new Vector2(dir * skill1DashSpeed, -2f);
+            else
+                rb.linearVelocity = new Vector2(dir * skill1DashSpeed, rb.linearVelocity.y);
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
 
         skill1HitBox?.Deactivate();
         rb.gravityScale = 3f;   // 지상/공중 모두 원래 중력으로 복귀
-        rb.linearVelocity = new Vector2(rb.linearVelocity.x * 0.1f, rb.linearVelocity.y);
+        // 종료 시 Y=0이면 중력 가속까지 한 프레임 떠 보임 → 즉시 음수 Y 부여
+        float endY = wasGrounded ? -5f : rb.linearVelocity.y;
+        rb.linearVelocity = new Vector2(rb.linearVelocity.x * 0.1f, endY);
         IsLocked = false;
     }
 
@@ -310,52 +320,73 @@ public class PlayerCombat : MonoBehaviour
             Mathf.Lerp(ultimateHitCountMin, ultimateHitCountMax, gaugeRatio));
         slowMo.ConsumeGauge(slowMo.CurrentGauge);
 
-        GetComponent<PlayerStats>()?.SetInvincible(hitCount * ultimateHitInterval + 0.5f);
+        // 무적 + 정지
+        GetComponent<PlayerStats>()?.SetInvincible(5f);  // 연출 동안 충분히 무적
         float prevGravity = rb.gravityScale;
         rb.gravityScale = 0f;
         rb.linearVelocity = Vector2.zero;
 
-        // ── 발동 연출 ──
-        HitEffectManager.Instance?.TriggerHitStop(0.12f);
+        // Dash-Attack 포즈로 고정 (시네마틱 동안 굳어있음)
+        controller.FreezeAtDashAttackPose();
+
+        // ── 시작 직전 짧은 hit stop + 셰이크 ──
+        HitEffectManager.Instance?.TriggerHitStop(0.08f);
         HitEffectManager.Instance?.TriggerScreenShake(0.1f, 0.4f);
-        yield return new WaitForSecondsRealtime(0.22f);
+        yield return new WaitForSecondsRealtime(0.12f);
 
-        // ── 난격 루프 ──
-        for (int i = 0; i < hitCount; i++)
+        // ── UltimateHitBox 안 적 식별 ──
+        // LayerMask 의존 X — 모든 콜라이더 잡은 후 EnemyBase 컴포넌트로 필터링 (설정 누락 방어)
+        List<EnemyBase> targets = new List<EnemyBase>();
+        Collider2D[] hits;
+        Bounds? hbBounds = null;
+        if (ultimateHitBox != null)
         {
-            if (controller.State == PlayerState.Dead) break;
-
-            controller.PlayAttackAnim(i);   // 난격 — 두 모션 번갈아 빠르게
-
-            // 난격 슬래시 파라미터 — 적 centerPoint에 \ / 교차 (대칭 45°)
-            float ultBase  = (i % 2 == 0) ? -45f : 45f;
-            float ultAngle = (controller.FacingDirection >= 0) ? ultBase : 180f - ultBase;
-            Color ultColor = (i % 2 == 0) ? slashCombo1Color : slashCombo2Color;
-
-            Collider2D[] cols = Physics2D.OverlapCircleAll(transform.position, ultimateRadius, enemyLayer);
-            foreach (var col in cols)
+            Collider2D col2d = ultimateHitBox.GetComponent<Collider2D>();
+            if (col2d != null)
             {
-                EnemyBase enemy = col.GetComponent<EnemyBase>();
-                if (enemy == null) continue;
+                // ★ HitBox.Awake에서 col.enabled = false 처리되어 bounds가 부정확할 수 있음
+                //   → 잠깐 활성화해서 bounds 정확히 읽음
+                bool wasEnabled = col2d.enabled;
+                col2d.enabled = true;
+                Physics2D.SyncTransforms();
+                Bounds b = col2d.bounds;
+                col2d.enabled = wasEnabled;
 
-                float hitDir = enemy.transform.position.x > transform.position.x ? 1f : -1f;
-                enemy.TakeDamage(ultimateDamage, hitDir * 4f);
-                HitEffectManager.Instance?.SpawnHitEffect(enemy.transform.position);
-
-                // 적 centerPoint에 슬래시 스폰
-                Vector3 ep = (Vector3)enemy.BodyPosition;
-                ep.z = 0f;
-                SlashEffect.Spawn(ep, ultAngle, slashLength * 1.1f, ultColor, 0.12f, 0.3f);
+                hbBounds = b;
+                hits = Physics2D.OverlapBoxAll(b.center, b.size, 0f);
+                Debug.Log($"[Ultimate] HitBox bounds center={b.center} size={b.size} hits={hits.Length}");
             }
+            else hits = new Collider2D[0];
+        }
+        else
+        {
+            hits = Physics2D.OverlapCircleAll(transform.position, ultimateRadius);
+            hbBounds = new Bounds(transform.position, Vector3.one * (ultimateRadius * 2f));
+        }
+        foreach (var h in hits)
+        {
+            EnemyBase enemy = h.GetComponentInParent<EnemyBase>();
+            if (enemy != null && !targets.Contains(enemy)) targets.Add(enemy);
+        }
+        Debug.Log($"[Ultimate] 타겟 적 {targets.Count}명 / damage={ultimateDamage} hitCount={hitCount}");
 
-            HitEffectManager.Instance?.TriggerHitStop(0.05f);
-
-            // 난격 각 히트마다 슬래시 방향으로 약한 셰이크
-            float ultRad = ultAngle * Mathf.Deg2Rad;
-            Vector2 ultDir = new Vector2(Mathf.Cos(ultRad), Mathf.Sin(ultRad));
-            HitEffectManager.Instance?.TriggerDirectionalShake(ultShakeDuration, ultShakeMagnitude, ultDir, ultShakeBias);
-
-            yield return new WaitForSecondsRealtime(ultimateHitInterval);
+        // ── 시네마틱 재생 ──
+        if (HitEffectManager.Instance != null)
+        {
+            yield return HitEffectManager.Instance.PlayUltimate(
+                transform.position, targets, hitCount, ultimateDamage,
+                ultimateKnockback * controller.FacingDirection, hbBounds);
+        }
+        else
+        {
+            // 시네마틱 없으면 데미지만 즉시 적용
+            float totalDamage = ultimateDamage * hitCount;
+            foreach (var t in targets)
+            {
+                if (t == null) continue;
+                float kb = (t.transform.position.x > transform.position.x ? 1f : -1f) * ultimateKnockback;
+                t.TakeDamage(totalDamage, kb);
+            }
         }
 
         HitEffectManager.Instance?.TriggerScreenShake(0.2f, 0.5f);
@@ -363,6 +394,10 @@ public class PlayerCombat : MonoBehaviour
         rb.gravityScale = prevGravity;
         isUltimate = false;
         IsLocked = false;
+
+        // 애니메이터 재가동 + Idle 복귀
+        controller.UnfreezeAnimator();
+        controller.SetState(PlayerState.Idle);
     }
 
     // ───── 공통 히트 콜백 ─────
@@ -373,6 +408,18 @@ public class PlayerCombat : MonoBehaviour
     // Skill1 전용 콜백 — 더 강한 셰이크 + 약간 더 긴 hit stop
     private void OnHitEnemySkill1(EnemyBase enemy) =>
         DoHitEffects(enemy, skill1ShakeDuration, skill1ShakeMagnitude, skill1ShakeBias, 0.12f);
+
+    // 필살기 난격 — hit stop/shake은 DoUltimate가 별도로 처리하므로 여기선 슬래시/이펙트만
+    private void OnHitEnemyUltimate(EnemyBase enemy)
+    {
+        HitEffectManager.Instance?.SpawnHitEffect(enemy.transform.position);
+
+        Vector3 sp = (Vector3)enemy.BodyPosition;
+        sp.z = 0f;
+        SlashEffect.Spawn(sp, pendingSlashAngle, pendingSlashLength, pendingSlashColor, 0.12f, 0.3f);
+
+        slowMo?.AddGauge(gaugePerHit * 0.3f);  // 필살기 중엔 게이지 적게 회수
+    }
 
     // Skill2 전용 콜백 — SlashEffect 없음 (이펙트 프리팹으로 대체)
     private void OnHitEnemySkill2(EnemyBase enemy)
@@ -404,4 +451,16 @@ public class PlayerCombat : MonoBehaviour
     public float Skill1CooldownRatio => skill1CoolTimer / skill1Cooldown;
     public float Skill2CooldownRatio => skill2CoolTimer / skill2Cooldown;
     public bool UltimateReady => slowMo != null && slowMo.CurrentGauge >= ultimateMinGauge && !isUltimate;
+
+    // 필살기 카드용 — SkillCard는 0=사용가능, 1=풀쿨 규약을 따름
+    // → 게이지가 ultimateMinGauge에 도달하면 0, 비어있으면 1
+    public float UltimateChargeRatio
+    {
+        get
+        {
+            if (isUltimate) return 1f;          // 발동 중엔 풀쿨 표시
+            if (slowMo == null || ultimateMinGauge <= 0f) return 1f;
+            return 1f - Mathf.Clamp01(slowMo.CurrentGauge / ultimateMinGauge);
+        }
+    }
 }
