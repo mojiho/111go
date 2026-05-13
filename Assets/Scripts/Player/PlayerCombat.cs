@@ -22,12 +22,14 @@ public class PlayerCombat : MonoBehaviour
     public float skill1Knockback = 8f;
     public float deshGravityScale = 11f;
 
-    [Header("Skill 2 - 범위 회전베기 (L)")]
+    [Header("Skill 2 - 강공격 (L)")]
     public HitBox skill2HitBox;
-    public float skill2Damage = 40f;
-    public float skill2Duration = 0.5f;
-    public float skill2Cooldown = 6f;
-    public float skill2Knockback = 6f;
+    public float skill2Damage = 80f;
+    public float skill2Duration = 0.45f;
+    public float skill2Cooldown = 7f;
+    public float skill2Knockback = 12f;
+    public GameObject skill2EffectPrefab;        // FX_FireGeyser 프리팹 연결
+    public Vector2 skill2EffectOffset = new Vector2(0f, 0f);  // 발 위치 기준 오프셋
 
     [Header("Ultimate - 난격 (V / 게이지 전량 소비)")]
     public float ultimateRadius = 2.2f;
@@ -203,6 +205,7 @@ public class PlayerCombat : MonoBehaviour
         controller.SetState(PlayerState.Skill1);
 
         controller.PlaySkill1Anim();   // Dash-Attack 애니메이션
+        controller.SpawnShockWaveBehind();
 
         float dir = controller.FacingDirection;
         bool wasGrounded = controller.IsGrounded;
@@ -226,11 +229,10 @@ public class PlayerCombat : MonoBehaviour
         pendingSlashColor  = slashSkill1Color;
         pendingSlashLength = slashLength * 1.6f;
 
-        yield return new WaitForSeconds(skill1Duration * 0.3f);
-
+        // 대쉬 시작과 동시에 히트박스 활성 (터널링 방지)
         skill1HitBox?.Activate(skill1Damage, skill1Knockback * dir, OnHitEnemySkill1);
 
-        yield return new WaitForSeconds(skill1Duration * 0.7f);
+        yield return new WaitForSeconds(skill1Duration);
 
         skill1HitBox?.Deactivate();
         rb.gravityScale = 3f;   // 지상/공중 모두 원래 중력으로 복귀
@@ -255,17 +257,33 @@ public class PlayerCombat : MonoBehaviour
         rb.linearVelocity = Vector2.zero;
         rb.gravityScale = 0f;
 
-        controller.PlaySkill2Anim();   // Attack 애니메이션 재사용
+        controller.PlayAttackAnim(0);  // 강공격 — 1타 모션 사용
 
-        yield return new WaitForSeconds(skill2Duration * 0.2f);
+        // 짧은 선딜 (강공격 느낌)
+        yield return new WaitForSeconds(skill2Duration * 0.25f);
 
-        skill2HitBox?.Activate(skill2Damage, skill2Knockback, OnHitEnemy);
+        // 이펙트 스폰 — 플레이어 발 위치 기준
+        if (skill2EffectPrefab != null)
+        {
+            Vector3 spawnPos = transform.position
+                + new Vector3(skill2EffectOffset.x * controller.FacingDirection,
+                              skill2EffectOffset.y, 0f);
+            GameObject fx = Instantiate(skill2EffectPrefab, spawnPos, Quaternion.identity);
+            SpriteRenderer fxSr = fx.GetComponent<SpriteRenderer>();
+            if (fxSr != null) fxSr.flipX = controller.FacingDirection > 0;
+        }
 
-        yield return new WaitForSeconds(skill2Duration * 0.6f);
+        // 강한 히트스탑 + 셰이크
+        HitEffectManager.Instance?.TriggerHitStop(0.12f);
+        HitEffectManager.Instance?.TriggerScreenShake(0.2f, 0.4f);
+
+        skill2HitBox?.Activate(skill2Damage, skill2Knockback * controller.FacingDirection, OnHitEnemySkill2);
+
+        yield return new WaitForSeconds(skill2Duration * 0.5f);
 
         skill2HitBox?.Deactivate();
 
-        yield return new WaitForSeconds(skill2Duration * 0.2f);
+        yield return new WaitForSeconds(skill2Duration * 0.25f);
 
         rb.gravityScale = 3f;
         IsLocked = false;
@@ -355,6 +373,15 @@ public class PlayerCombat : MonoBehaviour
     // Skill1 전용 콜백 — 더 강한 셰이크 + 약간 더 긴 hit stop
     private void OnHitEnemySkill1(EnemyBase enemy) =>
         DoHitEffects(enemy, skill1ShakeDuration, skill1ShakeMagnitude, skill1ShakeBias, 0.12f);
+
+    // Skill2 전용 콜백 — SlashEffect 없음 (이펙트 프리팹으로 대체)
+    private void OnHitEnemySkill2(EnemyBase enemy)
+    {
+        HitEffectManager.Instance?.TriggerHitStop(0.14f);
+        HitEffectManager.Instance?.TriggerScreenShake(0.2f, 0.4f);
+        HitEffectManager.Instance?.SpawnHitEffect(enemy.transform.position);
+        slowMo?.AddGauge(gaugePerHit);
+    }
 
     private void DoHitEffects(EnemyBase enemy, float shakeDur, float shakeMag, float shakeBias, float hitStop)
     {

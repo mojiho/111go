@@ -29,6 +29,11 @@ public class PlayerController : MonoBehaviour
     public float dashDuration = 0.14f;
     public float dashCooldown = 0.7f;
 
+    [Header("ShockWave")]
+    public GameObject shockWavePrefab;
+    public float shockWaveBehindOffset = 0.4f;   // 대쉬/대쉬어택 — 뒤쪽 X 오프셋
+    public float shockWaveBelowOffset  = 0.3f;   // 점프 — 아래쪽 Y 오프셋
+
     [Header("Jump Feel")]
     public float fallMultiplier = 2.5f;      // 떨어질 때 중력 배수
     public float lowJumpMultiplier = 2f;     // 점프키 짧게 눌렀을 때 상승 컷
@@ -144,7 +149,11 @@ public class PlayerController : MonoBehaviour
 
     private void HandleMovementInput()
     {
-        if (isDashing || combat.IsLocked) return;
+        if (isDashing || combat.IsLocked)
+        {
+            moveInput = 0f;
+            return;
+        }
 
         var kb = Keyboard.current;
 
@@ -166,6 +175,7 @@ public class PlayerController : MonoBehaviour
         {
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
             jumpCount++;
+            SpawnShockWaveBelow();
         }
 
         // 대시: Left Ctrl (웅크려도 대시는 가능 — 대시 시 자동 해제)
@@ -249,6 +259,7 @@ public class PlayerController : MonoBehaviour
 
         stats.SetInvincible(dashDuration + 0.05f);
         HitEffectManager.Instance?.TriggerDashEffect(transform.position, dir);
+        SpawnShockWaveBehind();
 
         yield return new WaitForSeconds(dashDuration);
 
@@ -265,6 +276,31 @@ public class PlayerController : MonoBehaviour
         }
         dashCoolTimer = 0f;
         canDash = true;
+    }
+
+    // ───── ShockWave 스폰 ─────
+
+    // 대쉬 / 대쉬어택 — 진행 방향 반대쪽 (뒤)
+    public void SpawnShockWaveBehind()
+    {
+        if (shockWavePrefab == null) return;
+        Vector3 pos = transform.position
+            + new Vector3(-FacingDirection * shockWaveBehindOffset, 0f, 0f);
+        GameObject fx = Instantiate(shockWavePrefab, pos, Quaternion.identity);
+        // 뒤쪽 방향으로 플립
+        SpriteRenderer sr = fx.GetComponent<SpriteRenderer>();
+        if (sr != null) sr.flipX = FacingDirection > 0;
+    }
+
+    // 점프 / 이단점프 — 발 아래 (90도 회전)
+    public void SpawnShockWaveBelow()
+    {
+        if (shockWavePrefab == null) return;
+        Vector3 pos = transform.position
+            + new Vector3(0f, -shockWaveBelowOffset, 0f);
+        GameObject fx = Instantiate(shockWavePrefab, pos, Quaternion.Euler(0f, 0f, -90f));
+        SpriteRenderer sr = fx.GetComponent<SpriteRenderer>();
+        if (sr != null) sr.flipY = FacingDirection < 0;
     }
 
     public void SetFacing(int dir)

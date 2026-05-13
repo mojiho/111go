@@ -1,0 +1,587 @@
+fileFormatVersion: 2
+guid: fc8c79f3b3d47c740ba03a58807bbb59
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -1759603070818317674
+    second: FX_airboom_0
+  - first:
+      213: -3530078113727774077
+    second: FX_airboom_1
+  - first:
+      213: 4264702360414652385
+    second: FX_airboom_2
+  - first:
+      213: -9160629699445764817
+    second: FX_airboom_3
+  - first:
+      213: -7364717931259529774
+    second: FX_airboom_4
+  - first:
+      213: -8270122115345394442
+    second: FX_airboom_5
+  - first:
+      213: -5353509461504087198
+    second: FX_airboom_6
+  - first:
+      213: 1354344400454756228
+    second: FX_airboom_7
+  - first:
+      213: -5289750227845142180
+    second: FX_airboom_8
+  - first:
+      213: 8519354972714002789
+    second: FX_airboom_9
+  - first:
+      213: 3425516336312810483
+    second: FX_airboom_10
+  - first:
+      213: 8501845383689889471
+    second: FX_airboom_11
+  - first:
+      213: -4238507032565078150
+    second: FX_airboom_12
+  - first:
+      213: 5669543352260649479
+    second: FX_airboom_13
+  - first:
+      213: -7004028300194951883
+    second: FX_airboom_14
+  - first:
+      213: 5599513951355617504
+    second: FX_airboom_15
+  - first:
+      213: 1996469258421681167
+    second: FX_airboom_16
+  - first:
+      213: 3176143358455932902
+    second: FX_airboom_17
+  - first:
+      213: -4710322423531015139
+    second: FX_airboom_18
+  - first:
+      213: -2828221411151211839
+    second: FX_airboom_19
+  - first:
+      213: 7150830389563206736
+    second: FX_airboom_20
+  - first:
+      213: -7887304616102753354
+    second: FX_airboom_21
+  - first:
+      213: -3337631506303637841
+    second: FX_airboom_22
+  - first:
+      213: -372973459031093054
+    second: FX_airboom_23
+  - first:
+      213: -8263664219182071360
+    second: FX_airboom_24
+  - first:
+      213: 1216238748179548893
+    second: FX_airboom_25
+  - first:
+      213: 3148429620443622448
+    second: FX_airboom_26
+  - first:
+      213: -3008777528767396149
+    second: FX_airboom_27
+  - first:
+      213: 5563311120192007306
+    second: FX_airboom_28
+  - first:
+      213: -6260802363154143865
+    second: FX_airboom_29
+  - first:
+      213: 2328637202272313173
+    second: FX_airboom_30
+  - first:
+      213: -6739882641271712341
+    second: FX_airboom_31
+  - first:
+      213: 361011248094365828
+    second: FX_airboom_32
+  - first:
+      213: -3479954778481270845
+    second: FX_airboom_33
+  - first:
+      213: -2327509569063763726
+    second: FX_airboom_34
+  - first:
+      213: -997941973000551147
+    second: FX_airboom_35
+  - first:
+      213: 2187563184994484851
+    second: FX_airboom_36
+  - first:
+      213: -5025122848942049
+    second: FX_airboom_37
+  - first:
+      213: 6528082046796593805
+    second: FX_airboom_38
+  - first:
+      213: 8093422365003547192
+    second: FX_airboom_39
+  - first:
+      213: 2218008487409475656
+    second: FX_airboom_40
+  - first:
+      213: -54910948796396049
+    second: FX_airboom_41
+  - first:
+      213: -1623105186377105072
+    second: FX_airboom_42
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 48
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: iOS
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: VisionOS
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: tvOS
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WindowsStoreApps
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: FX_airboom_00
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 40
+        width: 27
+        height: 62
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1e7094193344f2b30800000000000000
+      internalID: 4264702360414652385
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FX_airboom_01
+      rect:
+        serializedVersion: 2
+        x: 65
+        y: 37
+        width: 35
+        height: 74
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f2d44adc2d7eed080800000000000000
+      internalID: -9160629699445764817
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FX_airboom_02
+      rect:
+        serializedVersion: 2
+        x: 113
+        y: 33
+        width: 47
+        height: 85
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 26b2b55428384b5b0800000000000000
+      internalID: -5353509461504087198
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FX_airboom_03
+      rect:
+        serializedVersion: 2
+        x: 176
+        y: 24
+        width: 54
+        height: 106
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 48725ac7e099bc210800000000000000
+      internalID: 1354344400454756228
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FX_airboom_04
+      rect:
+        serializedVersion: 2
+        x: 240
+        y: 12
+        width: 62
+        height: 126
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c59afbea1380796b0800000000000000
+      internalID: -5289750227845142180
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FX_airboom_05
+      rect:
+        serializedVersion: 2
+        x: 321
+        y: 24
+        width: 72
+        height: 134
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5696310d534da3670800000000000000
+      internalID: 8519354972714002789
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FX_airboom_06
+      rect:
+        serializedVersion: 2
+        x: 418
+        y: 16
+        width: 70
+        height: 145
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7026c2ee3a34eae40800000000000000
+      internalID: 5669543352260649479
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FX_airboom_07
+      rect:
+        serializedVersion: 2
+        x: 515
+        y: 27
+        width: 70
+        height: 153
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0c10c88ec21915d80800000000000000
+      internalID: -8263664219182071360
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FX_airboom_08
+      rect:
+        serializedVersion: 2
+        x: 614
+        y: 23
+        width: 69
+        height: 159
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f18d2a96da52eeff0800000000000000
+      internalID: -5025122848942049
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FX_airboom_09
+      rect:
+        serializedVersion: 2
+        x: 717
+        y: 23
+        width: 66
+        height: 156
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 843fb76cdaa81454e9dd8ffac07c85b9
+      internalID: 548732511
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: a863b5e597646064baf8396858fb6fbd
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      FX_airboom_00: 4264702360414652385
+      FX_airboom_01: -9160629699445764817
+      FX_airboom_02: -5353509461504087198
+      FX_airboom_03: 1354344400454756228
+      FX_airboom_04: -5289750227845142180
+      FX_airboom_05: 8519354972714002789
+      FX_airboom_06: 5669543352260649479
+      FX_airboom_07: -8263664219182071360
+      FX_airboom_08: -5025122848942049
+      FX_airboom_09: 548732511
+      FX_airboom_1: -3530078113727774077
+      FX_airboom_10: 3425516336312810483
+      FX_airboom_11: 8501845383689889471
+      FX_airboom_12: -4238507032565078150
+      FX_airboom_14: -7004028300194951883
+      FX_airboom_15: 5599513951355617504
+      FX_airboom_16: 1996469258421681167
+      FX_airboom_17: 3176143358455932902
+      FX_airboom_18: -4710322423531015139
+      FX_airboom_19: -2828221411151211839
+      FX_airboom_20: 7150830389563206736
+      FX_airboom_21: -7887304616102753354
+      FX_airboom_22: -3337631506303637841
+      FX_airboom_23: -372973459031093054
+      FX_airboom_25: 1216238748179548893
+      FX_airboom_26: 3148429620443622448
+      FX_airboom_27: -3008777528767396149
+      FX_airboom_28: 5563311120192007306
+      FX_airboom_29: -6260802363154143865
+      FX_airboom_30: 2328637202272313173
+      FX_airboom_31: -6739882641271712341
+      FX_airboom_32: 361011248094365828
+      FX_airboom_33: -3479954778481270845
+      FX_airboom_34: -2327509569063763726
+      FX_airboom_35: -997941973000551147
+      FX_airboom_36: 2187563184994484851
+      FX_airboom_38: 6528082046796593805
+      FX_airboom_39: 8093422365003547192
+      FX_airboom_4: -7364717931259529774
+      FX_airboom_40: 2218008487409475656
+      FX_airboom_41: -54910948796396049
+      FX_airboom_42: -1623105186377105072
+      FX_airboom_5: -8270122115345394442
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

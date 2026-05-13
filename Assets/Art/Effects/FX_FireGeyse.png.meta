@@ -1,0 +1,929 @@
+fileFormatVersion: 2
+guid: 39a6dee43bfa0bb41a99d570359f9cb8
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -7147250353608844980
+    second: FX_FireGeyse_0
+  - first:
+      213: 6382280450748289277
+    second: FX_FireGeyse_1
+  - first:
+      213: 5005650671819770948
+    second: FX_FireGeyse_2
+  - first:
+      213: 9174026121612603055
+    second: FX_FireGeyse_3
+  - first:
+      213: -998031420454803392
+    second: FX_FireGeyse_4
+  - first:
+      213: 4039323388555307241
+    second: FX_FireGeyse_5
+  - first:
+      213: 8829028554292533578
+    second: FX_FireGeyse_6
+  - first:
+      213: 1845303960814979078
+    second: FX_FireGeyse_7
+  - first:
+      213: 2262878142013722183
+    second: FX_FireGeyse_8
+  - first:
+      213: 4198013916991698328
+    second: FX_FireGeyse_9
+  - first:
+      213: -8274178819896328983
+    second: FX_FireGeyse_10
+  - first:
+      213: -1532765663049405994
+    second: FX_FireGeyse_11
+  - first:
+      213: -5309222638656993091
+    second: FX_FireGeyse_12
+  - first:
+      213: -7008720383991494093
+    second: FX_FireGeyse_13
+  - first:
+      213: -7280156917270125451
+    second: FX_FireGeyse_14
+  - first:
+      213: -9153426903386643451
+    second: FX_FireGeyse_15
+  - first:
+      213: -9084336007431582254
+    second: FX_FireGeyse_16
+  - first:
+      213: 122067798046976365
+    second: FX_FireGeyse_17
+  - first:
+      213: -1484663324122653082
+    second: FX_FireGeyse_18
+  - first:
+      213: -2208694763507604834
+    second: FX_FireGeyse_19
+  - first:
+      213: -1854822234043008547
+    second: FX_FireGeyse_20
+  - first:
+      213: 6621856435288532179
+    second: FX_FireGeyse_21
+  - first:
+      213: -1875163045644610795
+    second: FX_FireGeyse_22
+  - first:
+      213: -8891697908128427724
+    second: FX_FireGeyse_23
+  - first:
+      213: 4652892012774556252
+    second: FX_FireGeyse_24
+  - first:
+      213: 1742878346092652815
+    second: FX_FireGeyse_25
+  - first:
+      213: 6263842109043171736
+    second: FX_FireGeyse_26
+  - first:
+      213: 4456983493880554156
+    second: FX_FireGeyse_27
+  - first:
+      213: 2594965361338687045
+    second: FX_FireGeyse_28
+  - first:
+      213: -3764498085246732243
+    second: FX_FireGeyse_29
+  - first:
+      213: -5531594394399082791
+    second: FX_FireGeyse_30
+  - first:
+      213: 4341131623530681435
+    second: FX_FireGeyse_31
+  - first:
+      213: -8054253920409973065
+    second: FX_FireGeyse_32
+  - first:
+      213: -1522122446576178250
+    second: FX_FireGeyse_33
+  - first:
+      213: 5307623963664594554
+    second: FX_FireGeyse_34
+  - first:
+      213: -3316941679844788946
+    second: FX_FireGeyse_35
+  - first:
+      213: -1242768219778622333
+    second: FX_FireGeyse_36
+  - first:
+      213: -7653306274876694646
+    second: FX_FireGeyse_37
+  - first:
+      213: 6197906716264454762
+    second: FX_FireGeyse_38
+  - first:
+      213: -7751238859325034711
+    second: FX_FireGeyse_39
+  - first:
+      213: -1238572319413402185
+    second: FX_FireGeyse_40
+  - first:
+      213: -605437511393713557
+    second: FX_FireGeyse_41
+  - first:
+      213: 622837907280144427
+    second: FX_FireGeyse_42
+  - first:
+      213: -8047607923934495529
+    second: FX_FireGeyse_43
+  - first:
+      213: 2435124089754608071
+    second: FX_FireGeyse_44
+  - first:
+      213: 4101111282780768590
+    second: FX_FireGeyse_45
+  - first:
+      213: 3275315344549834695
+    second: FX_FireGeyse_46
+  - first:
+      213: 8741005661189788692
+    second: FX_FireGeyse_47
+  - first:
+      213: -1087115702894183729
+    second: FX_FireGeyse_48
+  - first:
+      213: -3943026050867318166
+    second: FX_FireGeyse_49
+  - first:
+      213: -8618634840357435459
+    second: FX_FireGeyse_50
+  - first:
+      213: -7568707469155190902
+    second: FX_FireGeyse_51
+  - first:
+      213: -1499992943203339595
+    second: FX_FireGeyse_52
+  - first:
+      213: -3550424352196268122
+    second: FX_FireGeyse_53
+  - first:
+      213: -3395071929351692156
+    second: FX_FireGeyse_54
+  - first:
+      213: -7483121533255394327
+    second: FX_FireGeyse_55
+  - first:
+      213: 4317462331922441342
+    second: FX_FireGeyse_56
+  - first:
+      213: -7657108625474803026
+    second: FX_FireGeyse_57
+  - first:
+      213: 2809946089612409610
+    second: FX_FireGeyse_58
+  - first:
+      213: -77576592736019487
+    second: FX_FireGeyse_59
+  - first:
+      213: 4305251188128148428
+    second: FX_FireGeyse_60
+  - first:
+      213: -1702530471470646649
+    second: FX_FireGeyse_61
+  - first:
+      213: 6522424878906927397
+    second: FX_FireGeyse_62
+  - first:
+      213: -3726346691420092717
+    second: FX_FireGeyse_63
+  - first:
+      213: -3799149748746028938
+    second: FX_FireGeyse_64
+  - first:
+      213: 5540216119457812945
+    second: FX_FireGeyse_65
+  - first:
+      213: 7241605063356648143
+    second: FX_FireGeyse_66
+  - first:
+      213: 2014939153250756936
+    second: FX_FireGeyse_67
+  - first:
+      213: 4779191122265104174
+    second: FX_FireGeyse_68
+  - first:
+      213: -8750547463897167955
+    second: FX_FireGeyse_69
+  - first:
+      213: 1436554872094323644
+    second: FX_FireGeyse_70
+  - first:
+      213: 5671049631844030272
+    second: FX_FireGeyse_71
+  - first:
+      213: -5686129876284389733
+    second: FX_FireGeyse_72
+  - first:
+      213: -5772890513892836510
+    second: FX_FireGeyse_73
+  - first:
+      213: 7923953465580979990
+    second: FX_FireGeyse_74
+  - first:
+      213: 7054952399171919571
+    second: FX_FireGeyse_75
+  - first:
+      213: -4753419883294380154
+    second: FX_FireGeyse_76
+  - first:
+      213: -1342796324695931363
+    second: FX_FireGeyse_77
+  - first:
+      213: 6012773007580874205
+    second: FX_FireGeyse_78
+  - first:
+      213: -5093717214389588898
+    second: FX_FireGeyse_79
+  - first:
+      213: 1876333850524590463
+    second: FX_FireGeyse_80
+  - first:
+      213: 1945210554972561491
+    second: FX_FireGeyse_81
+  - first:
+      213: 8303141282597328325
+    second: FX_FireGeyse_82
+  - first:
+      213: 131789861280637191
+    second: FX_FireGeyse_83
+  - first:
+      213: 624392355424636227
+    second: FX_FireGeyse_84
+  - first:
+      213: -4885572347955512299
+    second: FX_FireGeyse_85
+  - first:
+      213: -4571961814835575960
+    second: FX_FireGeyse_86
+  - first:
+      213: -6283436272896521122
+    second: FX_FireGeyse_87
+  - first:
+      213: 400151522437585664
+    second: FX_FireGeyse_88
+  - first:
+      213: -5567314318562113866
+    second: FX_FireGeyse_89
+  - first:
+      213: 4401166377973327144
+    second: FX_FireGeyse_90
+  - first:
+      213: -5966204085435629104
+    second: FX_FireGeyse_91
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 48
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: iOS
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: VisionOS
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: tvOS
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WindowsStoreApps
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: FX_FireGeyse_01
+      rect:
+        serializedVersion: 2
+        x: 89
+        y: 216
+        width: 70
+        height: 44
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c491c50dbaddfcc90800000000000000
+      internalID: -7147250353608844980
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FX_FireGeyse_06
+      rect:
+        serializedVersion: 2
+        x: 722
+        y: 215
+        width: 117
+        height: 169
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: df095c3514a629850800000000000000
+      internalID: 6382280450748289277
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FX_FireGeyse_07
+      rect:
+        serializedVersion: 2
+        x: 864
+        y: 215
+        width: 121
+        height: 173
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 44c4383d3c4a77540800000000000000
+      internalID: 5005650671819770948
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FX_FireGeyse_08
+      rect:
+        serializedVersion: 2
+        x: 1009
+        y: 215
+        width: 122
+        height: 180
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: faeafdac620b05f70800000000000000
+      internalID: 9174026121612603055
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FX_FireGeyse_09
+      rect:
+        serializedVersion: 2
+        x: 1154
+        y: 215
+        width: 124
+        height: 178
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 048ec1df5b74622f0800000000000000
+      internalID: -998031420454803392
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FX_FireGeyse_05
+      rect:
+        serializedVersion: 2
+        x: 580
+        y: 216
+        width: 113
+        height: 158
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e922dd390d32951e0800000000000000
+      internalID: -2208694763507604834
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FX_FireGeyse_04
+      rect:
+        serializedVersion: 2
+        x: 436
+        y: 216
+        width: 111
+        height: 154
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ca2a782afd26add30800000000000000
+      internalID: 4456983493880554156
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FX_FireGeyse_03
+      rect:
+        serializedVersion: 2
+        x: 312
+        y: 215
+        width: 103
+        height: 130
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 41455e6465a4e4970800000000000000
+      internalID: 8741005661189788692
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FX_FireGeyse_10
+      rect:
+        serializedVersion: 2
+        x: 1297
+        y: 215
+        width: 127
+        height: 181
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a6231f1a2be8749c0800000000000000
+      internalID: -3943026050867318166
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FX_FireGeyse_02
+      rect:
+        serializedVersion: 2
+        x: 186
+        y: 216
+        width: 111
+        height: 72
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e5c24026e2b7f49b0800000000000000
+      internalID: -5093717214389588898
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FX_FireGeyse_11
+      rect:
+        serializedVersion: 2
+        x: 1460
+        y: 217
+        width: 129
+        height: 178
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5c5581d210faa3370800000000000000
+      internalID: 8303141282597328325
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FX_FireGeyse_12
+      rect:
+        serializedVersion: 2
+        x: 1609
+        y: 217
+        width: 126
+        height: 179
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8252e7c9085141d30800000000000000
+      internalID: 4401166377973327144
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FX_FireGeyse_00
+      rect:
+        serializedVersion: 2
+        x: 14
+        y: 216
+        width: 56
+        height: 32
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8ae1e86945babf2419629eb6c290f3f5
+      internalID: -385257419
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FX_FireGeyse_13
+      rect:
+        serializedVersion: 2
+        x: 1754
+        y: 217
+        width: 127
+        height: 177
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b0776115751faf648900b259d665f7be
+      internalID: -416846323
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FX_FireGeyse_14
+      rect:
+        serializedVersion: 2
+        x: 1901
+        y: 217
+        width: 99
+        height: 177
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 90a2b19472c8c9c49b8910bfdf1e50b1
+      internalID: -1552858998
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FX_FireGeyse_15
+      rect:
+        serializedVersion: 2
+        x: 2018
+        y: 207
+        width: 113
+        height: 88
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 491180ae6250771479186c56326eb515
+      internalID: 673698154
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 37659f2187173dc4db02fe1a83cf2625
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":64.0,"y":64.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.0},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":7,"pivotUnitMode":0,"slicingType":0,"keepEmptyRects":false,"isAlternate":false}'
+    nameFileIdTable:
+      FX_FireGeyse_0: 874750272
+      FX_FireGeyse_00: -385257419
+      FX_FireGeyse_01: -7147250353608844980
+      FX_FireGeyse_02: -5093717214389588898
+      FX_FireGeyse_03: 8741005661189788692
+      FX_FireGeyse_04: 4456983493880554156
+      FX_FireGeyse_05: -2208694763507604834
+      FX_FireGeyse_06: 6382280450748289277
+      FX_FireGeyse_07: 5005650671819770948
+      FX_FireGeyse_08: 9174026121612603055
+      FX_FireGeyse_09: -998031420454803392
+      FX_FireGeyse_10: -3943026050867318166
+      FX_FireGeyse_100: 1130645145
+      FX_FireGeyse_101: 598397334
+      FX_FireGeyse_102: 2047200305
+      FX_FireGeyse_103: -1363371878
+      FX_FireGeyse_104: 1531828591
+      FX_FireGeyse_105: -1676522695
+      FX_FireGeyse_106: 499509782
+      FX_FireGeyse_107: -2139040824
+      FX_FireGeyse_108: 296433311
+      FX_FireGeyse_109: -1509786662
+      FX_FireGeyse_11: 8303141282597328325
+      FX_FireGeyse_110: -1590430500
+      FX_FireGeyse_12: 4401166377973327144
+      FX_FireGeyse_13: -416846323
+      FX_FireGeyse_14: -1552858998
+      FX_FireGeyse_15: 673698154
+      FX_FireGeyse_16: -9084336007431582254
+      FX_FireGeyse_17: 122067798046976365
+      FX_FireGeyse_18: -1484663324122653082
+      FX_FireGeyse_20: -1854822234043008547
+      FX_FireGeyse_21: 6621856435288532179
+      FX_FireGeyse_22: -1875163045644610795
+      FX_FireGeyse_23: -8891697908128427724
+      FX_FireGeyse_24: 4652892012774556252
+      FX_FireGeyse_25: 1742878346092652815
+      FX_FireGeyse_26: 6263842109043171736
+      FX_FireGeyse_28: 2594965361338687045
+      FX_FireGeyse_29: -3764498085246732243
+      FX_FireGeyse_30: -5531594394399082791
+      FX_FireGeyse_31: 4341131623530681435
+      FX_FireGeyse_32: -8054253920409973065
+      FX_FireGeyse_33: -1522122446576178250
+      FX_FireGeyse_34: 5307623963664594554
+      FX_FireGeyse_35: -3316941679844788946
+      FX_FireGeyse_36: -1242768219778622333
+      FX_FireGeyse_37: -7653306274876694646
+      FX_FireGeyse_38: 6197906716264454762
+      FX_FireGeyse_39: -7751238859325034711
+      FX_FireGeyse_40: -1238572319413402185
+      FX_FireGeyse_41: -605437511393713557
+      FX_FireGeyse_42: 622837907280144427
+      FX_FireGeyse_43: -8047607923934495529
+      FX_FireGeyse_44: 2435124089754608071
+      FX_FireGeyse_45: 4101111282780768590
+      FX_FireGeyse_46: 3275315344549834695
+      FX_FireGeyse_48: -1087115702894183729
+      FX_FireGeyse_50: -8618634840357435459
+      FX_FireGeyse_51: -7568707469155190902
+      FX_FireGeyse_52: -1499992943203339595
+      FX_FireGeyse_53: -3550424352196268122
+      FX_FireGeyse_54: -3395071929351692156
+      FX_FireGeyse_55: -7483121533255394327
+      FX_FireGeyse_56: 4317462331922441342
+      FX_FireGeyse_57: -7657108625474803026
+      FX_FireGeyse_58: 2809946089612409610
+      FX_FireGeyse_59: -77576592736019487
+      FX_FireGeyse_60: 4305251188128148428
+      FX_FireGeyse_61: -1702530471470646649
+      FX_FireGeyse_62: 6522424878906927397
+      FX_FireGeyse_63: -3726346691420092717
+      FX_FireGeyse_64: -3799149748746028938
+      FX_FireGeyse_65: 5540216119457812945
+      FX_FireGeyse_66: 7241605063356648143
+      FX_FireGeyse_67: 2014939153250756936
+      FX_FireGeyse_68: 4779191122265104174
+      FX_FireGeyse_69: -8750547463897167955
+      FX_FireGeyse_70: 1436554872094323644
+      FX_FireGeyse_71: 5671049631844030272
+      FX_FireGeyse_72: -5686129876284389733
+      FX_FireGeyse_73: -5772890513892836510
+      FX_FireGeyse_74: 7923953465580979990
+      FX_FireGeyse_75: 7054952399171919571
+      FX_FireGeyse_76: -4753419883294380154
+      FX_FireGeyse_77: -1342796324695931363
+      FX_FireGeyse_78: 6012773007580874205
+      FX_FireGeyse_80: 1876333850524590463
+      FX_FireGeyse_81: 1945210554972561491
+      FX_FireGeyse_83: 131789861280637191
+      FX_FireGeyse_84: 624392355424636227
+      FX_FireGeyse_85: -4885572347955512299
+      FX_FireGeyse_86: -4571961814835575960
+      FX_FireGeyse_87: -6283436272896521122
+      FX_FireGeyse_88: 400151522437585664
+      FX_FireGeyse_89: -5567314318562113866
+      FX_FireGeyse_91: -5966204085435629104
+      FX_FireGeyse_92: 1398040317
+      FX_FireGeyse_93: -2100559881
+      FX_FireGeyse_94: 211995088
+      FX_FireGeyse_95: 1565216330
+      FX_FireGeyse_96: -142934267
+      FX_FireGeyse_97: 1412083321
+      FX_FireGeyse_98: 1631955711
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
