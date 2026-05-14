@@ -35,9 +35,16 @@ public abstract class EnemyBase : MonoBehaviour
     public Transform hpBarFollow;           // 위치를 따라갈 Transform — 보통 Canvas (또는 Slider) 드래그
     public Vector2 hpBarOffset = new Vector2(0f, 1.2f);  // centerPoint 기준 오프셋
 
+    [Header("Animation State Names")]
+    public string animIdle   = "Idle";
+    public string animWalk   = "Walk";
+    public string animAttack = "Attack";
+    public string animHurt   = "Hurt";
+    public string animDeath  = "Death";
+
     [Header("Freeze Pose (필살기 연출용)")]
-    [Tooltip("Freeze 시 재생할 Animator State 이름 (적별로 다를 수 있음)")]
-    public string frozenHurtStateName = "Hurt";
+    [Tooltip("Freeze 시 재생할 Animator State 이름 (비워두면 animHurt 사용)")]
+    public string frozenHurtStateName = "";
     [Range(0f, 1f)] public float frozenHurtNormalizedTime = 0.3f;
 
     [Header("Hit Stun")]
@@ -68,8 +75,9 @@ public abstract class EnemyBase : MonoBehaviour
             rb.gravityScale = 0f;
             if (anim != null && anim.runtimeAnimatorController != null)
             {
-                // 적의 Hurt 포즈에서 정지
-                anim.Play(frozenHurtStateName, 0, frozenHurtNormalizedTime);
+                string freezeState = string.IsNullOrEmpty(frozenHurtStateName)
+                    ? animHurt : frozenHurtStateName;
+                anim.Play(freezeState, 0, frozenHurtNormalizedTime);
                 anim.Update(0f);
                 anim.speed = 0f;
             }
@@ -119,6 +127,12 @@ public abstract class EnemyBase : MonoBehaviour
 
         rb.freezeRotation = true;
         rb.gravityScale = 3f;
+
+        // 씬에 미리 배치된 적의 초기 스프라이트 방향을 lastFaceDir에 동기화
+        // → 첫 이동 시 ApplyFacing이 동일 방향 판단으로 skip되는 현상 방지
+        if (sr != null)
+            lastFaceDir = spriteDefaultRight ? (sr.flipX ? -1f : 1f)
+                                             : (sr.flipX ?  1f : -1f);
 
         // HP 슬라이더 초기화
         if (hpSlider != null)
@@ -192,8 +206,8 @@ public abstract class EnemyBase : MonoBehaviour
     protected void MoveToward(Vector2 target, float speed)
     {
         float dir = target.x > BodyPosition.x ? 1f : -1f;
+        ApplyFacing(dir);   // 이동 시작 즉시 스프라이트 방향 반영 (velocity 가속 대기 불필요)
         float targetX = dir * speed;
-        // 일정 가속도로 목표속도까지 접근 → 누적 폭주 없음
         float newX = Mathf.MoveTowards(rb.linearVelocity.x, targetX, acceleration * Time.deltaTime);
         rb.linearVelocity = new Vector2(newX, rb.linearVelocity.y);
     }
@@ -207,22 +221,34 @@ public abstract class EnemyBase : MonoBehaviour
     private float lastFaceDir = 1f;
     private bool centerInit;
     private float centerBaseX;
+
     private void UpdateFacing()
     {
-        if (player == null || sr == null) return;
+        if (sr == null) return;
+        // Chase·Attack 상태에서만 매 프레임 플레이어 방향으로 갱신
+        // Idle 이동 방향은 MoveToward() 호출 시점에 ApplyFacing()으로 즉시 처리
+        if ((State == EnemyState.Chase || State == EnemyState.Attack) && player != null)
+        {
+            float xDelta = player.position.x - BodyPosition.x;
+            if (Mathf.Abs(xDelta) >= 0.1f)
+                ApplyFacing(xDelta > 0f ? 1f : -1f);
+        }
+    }
+
+    // 방향 적용 공통 메서드 — MoveToward / UpdateFacing 양쪽에서 호출
+    protected void ApplyFacing(float dir)
+    {
+        if (sr == null) return;
         if (centerPoint != null && !centerInit)
         {
             centerBaseX = Mathf.Abs(centerPoint.localPosition.x);
             centerInit = true;
         }
 
-        float xDelta = player.position.x - BodyPosition.x;
-        if (Mathf.Abs(xDelta) < 0.2f) return;
-        float faceDir = xDelta > 0f ? 1f : -1f;
-        if (faceDir == lastFaceDir) return;
-        lastFaceDir = faceDir;
+        if (dir == lastFaceDir) return;
+        lastFaceDir = dir;
 
-        bool flipped = spriteDefaultRight ? (faceDir < 0f) : (faceDir > 0f);
+        bool flipped = spriteDefaultRight ? (dir < 0f) : (dir > 0f);
 
         // 1) Flip 전 Center의 월드 위치 기억
         Vector3 centerWorldBefore = centerPoint != null ? centerPoint.position : transform.position;
@@ -237,7 +263,7 @@ public abstract class EnemyBase : MonoBehaviour
             centerPoint.localPosition = c;
         }
 
-        // 3) 콜라이더 오프셋도 부호 반전 (시각과 함께 이동)
+        // 3) 콜라이더 오프셋도 부호 반전
         if (mainCol != null)
         {
             mainCol.offset = new Vector2(
@@ -246,7 +272,7 @@ public abstract class EnemyBase : MonoBehaviour
             );
         }
 
-        // 4) 루트 위치를 보정 → Center의 월드 위치를 flip 전과 동일하게 유지
+        // 4) 루트 위치 보정 → Center 월드 위치를 flip 전과 동일하게 유지
         if (centerPoint != null)
         {
             Vector3 centerWorldAfter = centerPoint.position;
@@ -283,7 +309,7 @@ public abstract class EnemyBase : MonoBehaviour
     protected virtual IEnumerator HurtRoutine()
     {
         State = EnemyState.Hurt;
-        anim?.Play("Hurt", 0, 0f);
+        anim?.Play(animHurt, 0, 0f);
 
         yield return new WaitForSeconds(0.25f);
 
@@ -295,8 +321,10 @@ public abstract class EnemyBase : MonoBehaviour
         isDead = true;
         State = EnemyState.Dead;
         rb.linearVelocity = Vector2.zero;
+        rb.gravityScale = 0f;       // 그 자리에서 멈춤
+        rb.bodyType = RigidbodyType2D.Kinematic;  // 외부 힘도 무시
 
-        anim?.Play("Death", 0, 0f);
+        anim?.Play(animDeath, 0, 0f);
         if (mainCol != null) mainCol.enabled = false;
 
         if (hpSlider != null) hpSlider.gameObject.SetActive(false);
@@ -316,9 +344,9 @@ public abstract class EnemyBase : MonoBehaviour
         // Bringer of Death 컨트롤러도 파라미터 없으므로 Play() 사용
         switch (newState)
         {
-            case EnemyState.Idle:   anim?.Play("Idle",   0, 0f); break;
-            case EnemyState.Chase:  anim?.Play("Walk",   0, 0f); break;
-            case EnemyState.Attack: anim?.Play("Attack", 0, 0f); break;
+            case EnemyState.Idle:   anim?.Play(animIdle,   0, 0f); break;
+            case EnemyState.Chase:  anim?.Play(animWalk,   0, 0f); break;
+            case EnemyState.Attack: anim?.Play(animAttack, 0, 0f); break;
         }
     }
 

@@ -103,6 +103,7 @@ public class PlayerStats : MonoBehaviour
         UpdateWorldHpBar();
 
         HitEffectManager.Instance?.TriggerHitFlash(spriteRenderer);
+        HitEffectManager.Instance?.SpawnPlayerHitEffect(transform.position);
 
         // 피격 셰이크 — 데미지 비율 따라 강도 가변 (Inspector 노출값 사용)
         float hitMag = Mathf.Lerp(hurtShakeMagnitudeMin, hurtShakeMagnitudeMax,

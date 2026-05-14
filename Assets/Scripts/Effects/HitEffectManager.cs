@@ -19,7 +19,8 @@ public class HitEffectManager : MonoBehaviour
     public float hitFlashDuration = 0.08f;
 
     [Header("Prefabs")]
-    public GameObject hitEffectPrefab;          // 파티클 or 스프라이트
+    public GameObject hitEffectPrefab;          // 적 피격 이펙트
+    public GameObject playerHitEffectPrefab;    // 플레이어 피격 이펙트 (Hit 프리팹)
     public GameObject dashAfterimagePool;       // 선택: 오브젝트 풀
 
     [Header("Slash Trail")]
@@ -135,12 +136,23 @@ public class HitEffectManager : MonoBehaviour
         if (sr != null) sr.color = original;
     }
 
-    // ───── 히트 이펙트 스폰 ─────
+    // ───── 히트 이펙트 스폰 (적 피격) ─────
     public void SpawnHitEffect(Vector3 position)
     {
         if (hitEffectPrefab == null) return;
-        GameObject fx = Instantiate(hitEffectPrefab, position, Quaternion.identity);
-        Destroy(fx, 1f);
+        // FX_AutoDestroy가 붙어있으면 자동 반납, 없으면 1초 후 반납
+        GameObject fx = FXPool.Spawn(hitEffectPrefab, position + Vector3.up * 0.5f, Quaternion.identity);
+        if (fx != null && fx.GetComponent<FX_AutoDestroy>() == null)
+            FXPool.ReturnDelayed(fx, 1f);
+    }
+
+    // ───── 플레이어 피격 이펙트 스폰 ─────
+    public void SpawnPlayerHitEffect(Vector3 position)
+    {
+        if (playerHitEffectPrefab == null) return;
+        GameObject fx = FXPool.Spawn(playerHitEffectPrefab, position, Quaternion.identity);
+        if (fx != null && fx.GetComponent<FX_AutoDestroy>() == null)
+            FXPool.ReturnDelayed(fx, 1f);
     }
 
     // ───── 대시 이펙트 ─────
@@ -188,8 +200,9 @@ public class HitEffectManager : MonoBehaviour
         if (ultImpactPrefab != null)
         {
             Vector3 impactPos = playerWorldPos + (Vector3)ultImpactOffset;
-            GameObject fx = Instantiate(ultImpactPrefab, impactPos, Quaternion.identity);
-            Destroy(fx, 2.5f);
+            GameObject fx = FXPool.Spawn(ultImpactPrefab, impactPos, Quaternion.identity);
+            if (fx != null && fx.GetComponent<FX_AutoDestroy>() == null)
+                FXPool.ReturnDelayed(fx, 2.5f);
         }
 
         yield return new WaitForSecondsRealtime(ultImpactToPortraitDelay);
@@ -207,7 +220,8 @@ public class HitEffectManager : MonoBehaviour
 
         yield return new WaitForSecondsRealtime(ultBlackoutHoldBeforeSlash);
 
-        // ── 5. 슬래시 펑펑 ──
+        // ── 5. 슬래시 펑펑 ── (시작과 동시에 Portrait 숨김)
+        if (ultPortraitImage != null) ultPortraitImage.gameObject.SetActive(false);
         for (int i = 0; i < hitCount; i++)
         {
             SpawnUltUISlash(i);
@@ -244,7 +258,7 @@ public class HitEffectManager : MonoBehaviour
                 sp.z = 0f;
                 Color slashCol = ultSlashColors[i % ultSlashColors.Length];
                 SlashEffect.Spawn(sp, slashBaseAngle + Random.Range(-10f, 10f), 3.5f, slashCol, 0.18f, 0.3f);
-                SpawnHitEffect(t.transform.position);
+                SpawnHitEffect((Vector3)t.BodyPosition);
             }
             Debug.Log($"[Ultimate Cinematic] hit#{i+1}/{hitCount} 적용={hitsApplied}");
 

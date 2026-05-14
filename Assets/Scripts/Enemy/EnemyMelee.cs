@@ -63,14 +63,14 @@ public class EnemyMelee : EnemyBase
         StopMoving();
 
         // 윈드업 — Idle 포즈로 잠깐 멈춤 (눈치채는 시간)
-        anim?.Play("Idle", 0, 0f);
+        anim?.Play(animIdle, 0, 0f);
         yield return new WaitForSeconds(attackWindup);
 
         // 윈드업 중 피격됐으면 공격 취소
         if (isDead || State == EnemyState.Hurt) { isActing = false; yield break; }
 
         // 공격 모션 + 히트박스 활성 (제자리)
-        anim?.Play("Attack", 0, 0f);
+        anim?.Play(animAttack, 0, 0f);
 
         // 히트박스를 현재 바라보는 방향으로 배치
         if (meleeHitBox != null)

@@ -2,17 +2,25 @@ using UnityEngine;
 
 public class Projectile : MonoBehaviour
 {
-    public float speed = 10f;
+    public float speed  = 10f;
     public float damage = 20f;
     public float lifetime = 4f;
+    public float knockback = 4f;
     public bool isPlayerProjectile = false;
-    public GameObject hitEffectPrefab;
 
-    private Vector2 direction;
+    [Header("Hit Animation")]
+    public string hitStateName = "Hit";   // Animator State 이름
+
+    private Vector2   direction;
     private Rigidbody2D rb;
+    private Animator  anim;
+    private Collider2D col;
 
+    private bool _isHit;     // 충돌 처리 완료 — 중복 방지
     private bool _isFrozen;
     private Vector2 _frozenVel;
+
+    // ─── Freeze (필살기 연출) ───
     public void SetFrozen(bool freeze)
     {
         if (_isFrozen == freeze) return;
@@ -24,8 +32,7 @@ public class Projectile : MonoBehaviour
         }
         else
         {
-            if (rb != null) rb.linearVelocity = _frozenVel;
-            else if (direction != Vector2.zero) { /* rb-less는 Update 멈춰있다가 자연 재개 */ }
+            if (rb != null && !_isHit) rb.linearVelocity = _frozenVel;
         }
     }
 
@@ -35,45 +42,65 @@ public class Projectile : MonoBehaviour
             p.SetFrozen(freeze);
     }
 
+    // ─── 초기화 ───
     private void Awake()
     {
-        rb = GetComponent<Rigidbody2D>();
+        rb   = GetComponent<Rigidbody2D>();
+        anim = GetComponent<Animator>();
+        col  = GetComponent<Collider2D>();
         if (rb != null) rb.gravityScale = 0f;
     }
 
     public void Init(Vector2 dir, float dmg = -1f)
     {
+        _isHit    = false;
         direction = dir.normalized;
         if (dmg >= 0f) damage = dmg;
 
         if (rb != null)
             rb.linearVelocity = direction * speed;
-        else
-            transform.right = direction;
 
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-        transform.rotation = Quaternion.Euler(0, 0, angle);
+        transform.rotation = Quaternion.Euler(0f, 0f, angle);
 
-        Destroy(gameObject, lifetime);
+        // 애니메이터 재시작 (풀 재사용 대비)
+        anim?.Play("Projectile", 0, 0f);
+
+        CancelInvoke(nameof(ForceDestroy));
+        Invoke(nameof(ForceDestroy), lifetime);
     }
 
+    // ─── 이동 ───
     private void Update()
     {
-        if (_isFrozen) return;
+        if (_isFrozen || _isHit) return;
         if (rb == null)
             transform.position += (Vector3)(direction * speed * Time.deltaTime);
+
+        // Hit 애니메이션 재생 중 — 끝나면 파괴
+        if (_isHit && anim != null)
+        {
+            var state = anim.GetCurrentAnimatorStateInfo(0);
+            if (state.IsName(hitStateName) && state.normalizedTime >= 1f)
+                ForceDestroy();
+        }
     }
 
+    // ─── 충돌 ───
     private void OnTriggerEnter2D(Collider2D other)
     {
+        if (_isHit) return;
+
+        bool shouldHit = false;
+
         if (isPlayerProjectile)
         {
-            EnemyBase enemy = other.GetComponent<EnemyBase>();
+            EnemyBase enemy = other.GetComponentInParent<EnemyBase>();
             if (enemy != null)
             {
-                enemy.TakeDamage(damage, direction.x > 0 ? 3f : -3f);
+                enemy.TakeDamage(damage, direction.x > 0f ? knockback : -knockback);
                 HitEffectManager.Instance?.SpawnHitEffect(transform.position);
-                Destroy(gameObject);
+                shouldHit = true;
             }
         }
         else
@@ -81,16 +108,39 @@ public class Projectile : MonoBehaviour
             PlayerStats player = other.GetComponent<PlayerStats>();
             if (player != null)
             {
-                // 발사체 진행 방향으로 셰이크
                 player.TakeDamage(damage, direction);
-                if (hitEffectPrefab != null)
-                    Instantiate(hitEffectPrefab, transform.position, Quaternion.identity);
-                Destroy(gameObject);
+                shouldHit = true;
             }
         }
 
-        // 지형에 맞으면 제거
-        if (other.gameObject.layer == LayerMask.NameToLayer("Ground"))
-            Destroy(gameObject);
+        // 지형
+        if (!shouldHit && other.gameObject.layer == LayerMask.NameToLayer("Ground"))
+            shouldHit = true;
+
+        if (shouldHit) PlayHitAndDestroy();
     }
+
+    // ─── Hit 연출 후 파괴 ───
+    private void PlayHitAndDestroy()
+    {
+        if (_isHit) return;
+        _isHit = true;
+
+        // 이동 정지
+        if (rb != null) rb.linearVelocity = Vector2.zero;
+        if (col != null) col.enabled = false;
+
+        // Hit 애니메이터 State 재생
+        if (anim != null && !string.IsNullOrEmpty(hitStateName))
+        {
+            anim.Play(hitStateName, 0, 0f);
+            // Update()에서 종료 감지 → ForceDestroy 호출
+        }
+        else
+        {
+            ForceDestroy();
+        }
+    }
+
+    private void ForceDestroy() => Destroy(gameObject);
 }

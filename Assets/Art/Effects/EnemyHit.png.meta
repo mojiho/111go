@@ -1,0 +1,423 @@
+fileFormatVersion: 2
+guid: e04eb233e382e244a825c2b57c966337
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 9007547923711109566
+    second: EnemyHit_0
+  - first:
+      213: 6556199484380709909
+    second: EnemyHit_1
+  - first:
+      213: -1650778090482583005
+    second: EnemyHit_2
+  - first:
+      213: -1258601991699353743
+    second: EnemyHit_3
+  - first:
+      213: 2031771246011943509
+    second: EnemyHit_4
+  - first:
+      213: 5391881400885737937
+    second: EnemyHit_5
+  - first:
+      213: 7844228988783735417
+    second: EnemyHit_6
+  - first:
+      213: 568863234516940398
+    second: EnemyHit_7
+  - first:
+      213: 3956630532267067312
+    second: EnemyHit_8
+  - first:
+      213: 8709851083854934501
+    second: EnemyHit_9
+  - first:
+      213: 8957387482296871768
+    second: EnemyHit_10
+  - first:
+      213: 1499436885892108664
+    second: EnemyHit_11
+  - first:
+      213: 4265644331224404037
+    second: EnemyHit_12
+  - first:
+      213: 4315128074115911704
+    second: EnemyHit_13
+  - first:
+      213: 3789454879483751667
+    second: EnemyHit_14
+  - first:
+      213: -5823840790917725398
+    second: EnemyHit_15
+  - first:
+      213: 6312136292261541148
+    second: EnemyHit_16
+  - first:
+      213: 5558148489361723752
+    second: EnemyHit_17
+  - first:
+      213: 895306877730810489
+    second: EnemyHit_18
+  - first:
+      213: 9184533262043881381
+    second: EnemyHit_19
+  - first:
+      213: 7761691341348625043
+    second: EnemyHit_20
+  - first:
+      213: -7581472705765302655
+    second: EnemyHit_21
+  - first:
+      213: -6976515324966051851
+    second: EnemyHit_22
+  - first:
+      213: -9014335047233718313
+    second: EnemyHit_23
+  - first:
+      213: -5239719636990753351
+    second: EnemyHit_24
+  - first:
+      213: -7126931240005342680
+    second: EnemyHit_25
+  - first:
+      213: 3852476757577671374
+    second: EnemyHit_26
+  - first:
+      213: -3201569455693379211
+    second: EnemyHit_27
+  - first:
+      213: -8926469726404350194
+    second: EnemyHit_28
+  - first:
+      213: -7832357878534972287
+    second: EnemyHit_29
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 48
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: iOS
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: VisionOS
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: tvOS
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WindowsStoreApps
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: EnemyHit_0
+      rect:
+        serializedVersion: 2
+        x: 2
+        y: 0
+        width: 78
+        height: 90
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5148c1fd1bc4cfa50800000000000000
+      internalID: 6556199484380709909
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EnemyHit_2
+      rect:
+        serializedVersion: 2
+        x: 82
+        y: 1
+        width: 78
+        height: 83
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a234bec18af8d2fa0800000000000000
+      internalID: -5823840790917725398
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EnemyHit_3
+      rect:
+        serializedVersion: 2
+        x: 161
+        y: 1
+        width: 83
+        height: 74
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9b5078a50c6c847b0800000000000000
+      internalID: -5239719636990753351
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EnemyHit_4
+      rect:
+        serializedVersion: 2
+        x: 245
+        y: 3
+        width: 78
+        height: 69
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 579c7adea8db193d0800000000000000
+      internalID: -3201569455693379211
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EnemyHit_5
+      rect:
+        serializedVersion: 2
+        x: 324
+        y: 3
+        width: 73
+        height: 61
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 18cd030d100ed4390800000000000000
+      internalID: -7832357878534972287
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: a40d6db83e095264e88241bc61039be7
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":64.0,"y":64.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":0,"keepEmptyRects":false,"isAlternate":false}'
+    nameFileIdTable:
+      EnemyHit_0: 6556199484380709909
+      EnemyHit_10: 8957387482296871768
+      EnemyHit_11: 1499436885892108664
+      EnemyHit_12: 4265644331224404037
+      EnemyHit_13: 4315128074115911704
+      EnemyHit_14: 3789454879483751667
+      EnemyHit_16: 6312136292261541148
+      EnemyHit_17: 5558148489361723752
+      EnemyHit_18: 895306877730810489
+      EnemyHit_19: 9184533262043881381
+      EnemyHit_2: -5823840790917725398
+      EnemyHit_20: 7761691341348625043
+      EnemyHit_21: -7581472705765302655
+      EnemyHit_22: -6976515324966051851
+      EnemyHit_23: -9014335047233718313
+      EnemyHit_25: -7126931240005342680
+      EnemyHit_26: 3852476757577671374
+      EnemyHit_28: -8926469726404350194
+      EnemyHit_3: -5239719636990753351
+      EnemyHit_30: 1997538673
+      EnemyHit_4: -3201569455693379211
+      EnemyHit_5: -7832357878534972287
+      EnemyHit_6: 7844228988783735417
+      EnemyHit_7: 568863234516940398
+      EnemyHit_8: 3956630532267067312
+      EnemyHit_9: 8709851083854934501
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

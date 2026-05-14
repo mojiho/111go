@@ -129,7 +129,7 @@ public class EnemyEliteMelee : EnemyBase
         attackCoolTimer = cooldown;
         StopMoving();
 
-        anim?.Play("Idle", 0, 0f);   // 윈드업 — 잠깐 멈춤
+        anim?.Play(animIdle, 0, 0f);  // 윈드업 — 잠깐 멈춤
         yield return new WaitForSeconds(attackWindup * (isPhase2 ? 0.65f : 1f));
 
         // 윈드업 중 피격됐으면 공격 취소
@@ -169,7 +169,7 @@ public class EnemyEliteMelee : EnemyBase
 
         float prevGravity = rb.gravityScale;
         rb.gravityScale = 0f;
-        anim?.Play("Attack", 0, 0f);
+        anim?.Play(animAttack, 0, 0f);
 
         yield return new WaitForSeconds(0.15f);
 
@@ -220,7 +220,7 @@ public class EnemyEliteMelee : EnemyBase
         float dodgeDir = attackDir > 0f ? -1f : 1f;
         rb.linearVelocity = new Vector2(dodgeDir * dodgeSpeed, rb.linearVelocity.y + 1.5f);
 
-        anim?.Play("Walk", 0, 0f);   // 회피 중 Walk 재생
+        anim?.Play(animWalk, 0, 0f);  // 회피 중 Walk 재생
         yield return new WaitForSeconds(dodgeDuration);
 
         rb.linearVelocity = new Vector2(rb.linearVelocity.x * 0.3f, rb.linearVelocity.y);

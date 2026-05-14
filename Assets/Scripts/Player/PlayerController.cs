@@ -34,6 +34,10 @@ public class PlayerController : MonoBehaviour
     public float shockWaveBehindOffset = 0.4f;   // 대쉬/대쉬어택 — 뒤쪽 X 오프셋
     public float shockWaveBelowOffset  = 0.3f;   // 점프 — 아래쪽 Y 오프셋
 
+    [Header("Jump Effect")]
+    public GameObject jumpEffectPrefab;           // 지상 점프 시 발 아래 이펙트
+    public float jumpEffectYOffset = -0.2f;       // 발 기준 Y 오프셋
+
     [Header("Jump Feel")]
     public float fallMultiplier = 2.5f;      // 떨어질 때 중력 배수
     public float lowJumpMultiplier = 2f;     // 점프키 짧게 눌렀을 때 상승 컷
@@ -106,6 +110,7 @@ public class PlayerController : MonoBehaviour
         HandleMovementInput();
         HandleCombatInput();
         UpdateAnimator();
+        UpdateDashCooldown();
     }
 
     private void FixedUpdate()
@@ -173,9 +178,17 @@ public class PlayerController : MonoBehaviour
         // 점프: ↑ 방향키 (웅크린 상태에선 점프 불가)
         if (!isCrouching && kb.upArrowKey.wasPressedThisFrame && jumpCount < maxJumpCount)
         {
+            bool isGroundJump = jumpCount == 0;   // 0 = 지상 첫 점프, 1 = 이단점프
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
             jumpCount++;
-            SpawnShockWaveBelow();
+            if (isGroundJump)
+            {
+                SpawnJumpEffect();    // 지상 점프: Jump 이펙트만
+            }
+            else
+            {
+                SpawnShockWaveBelow();  // 이단점프: ShockWave만
+            }
         }
 
         // 대시: Left Ctrl (웅크려도 대시는 가능 — 대시 시 자동 해제)
@@ -241,6 +254,7 @@ public class PlayerController : MonoBehaviour
     {
         canDash = false;
         isDashing = true;
+        dashCoolTimer = dashCooldown;   // 사용 즉시 쿨타임 시작
         bool dashGrounded = IsGrounded;
         SetState(PlayerState.Dash);
 
@@ -275,14 +289,18 @@ public class PlayerController : MonoBehaviour
         isDashing = false;
         SetState(PlayerState.Idle);   // 대시 끝난 직후 명시적으로 Idle 세팅 → Run이 덮지 못하게
 
-        dashCoolTimer = dashCooldown;
-        while (dashCoolTimer > 0f)
+        // 쿨타임은 Update에서 감소 (대쉬 종료 후 자동으로 canDash 복구)
+    }
+
+    private void UpdateDashCooldown()
+    {
+        if (dashCoolTimer <= 0f) return;
+        dashCoolTimer -= Time.unscaledDeltaTime;
+        if (dashCoolTimer <= 0f)
         {
-            dashCoolTimer -= Time.unscaledDeltaTime;
-            yield return null;
+            dashCoolTimer = 0f;
+            canDash = true;
         }
-        dashCoolTimer = 0f;
-        canDash = true;
     }
 
     // ───── ShockWave 스폰 ─────
@@ -293,10 +311,20 @@ public class PlayerController : MonoBehaviour
         if (shockWavePrefab == null) return;
         Vector3 pos = transform.position
             + new Vector3(-FacingDirection * shockWaveBehindOffset, 0f, 0f);
-        GameObject fx = Instantiate(shockWavePrefab, pos, Quaternion.identity);
-        // 뒤쪽 방향으로 플립
-        SpriteRenderer sr = fx.GetComponent<SpriteRenderer>();
-        if (sr != null) sr.flipX = FacingDirection > 0;
+        GameObject fx = FXPool.Spawn(shockWavePrefab, pos, Quaternion.identity);
+        if (fx != null)
+        {
+            SpriteRenderer sr = fx.GetComponent<SpriteRenderer>();
+            if (sr != null) sr.flipX = FacingDirection > 0;
+        }
+    }
+
+    // 지상 점프 이펙트 — 발 아래 정방향 스폰
+    private void SpawnJumpEffect()
+    {
+        if (jumpEffectPrefab == null) return;
+        Vector3 pos = transform.position + new Vector3(0f, jumpEffectYOffset, 0f);
+        FXPool.Spawn(jumpEffectPrefab, pos, Quaternion.identity);
     }
 
     // 점프 / 이단점프 — 발 아래 (90도 회전)
@@ -305,9 +333,12 @@ public class PlayerController : MonoBehaviour
         if (shockWavePrefab == null) return;
         Vector3 pos = transform.position
             + new Vector3(0f, -shockWaveBelowOffset, 0f);
-        GameObject fx = Instantiate(shockWavePrefab, pos, Quaternion.Euler(0f, 0f, -90f));
-        SpriteRenderer sr = fx.GetComponent<SpriteRenderer>();
-        if (sr != null) sr.flipY = FacingDirection < 0;
+        GameObject fx = FXPool.Spawn(shockWavePrefab, pos, Quaternion.Euler(0f, 0f, -90f));
+        if (fx != null)
+        {
+            SpriteRenderer sr = fx.GetComponent<SpriteRenderer>();
+            if (sr != null) sr.flipY = FacingDirection < 0;
+        }
     }
 
     public void SetFacing(int dir)

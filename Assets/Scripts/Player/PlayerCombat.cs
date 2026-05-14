@@ -33,6 +33,7 @@ public class PlayerCombat : MonoBehaviour
     public Vector2 skill2EffectOffset = new Vector2(0f, 0f);  // 발 위치 기준 오프셋
 
     [Header("Ultimate - 난격 (V / 게이지 전량 소비)")]
+    public float ultimateCooldown = 8f;         // 사용 후 재사용 대기시간
     public HitBox ultimateHitBox;         // Warrior 자식 UltimateHitBox 연결
     public float ultimateActiveWindow = 0.04f;  // 한 틱당 히트박스 활성 시간
     public float ultimateDamage = 55f;
@@ -100,6 +101,7 @@ public class PlayerCombat : MonoBehaviour
 
     private float skill1CoolTimer;
     private float skill2CoolTimer;
+    private float ultimateCoolTimer;
     private bool isUltimate;
 
     private void Awake()
@@ -124,6 +126,7 @@ public class PlayerCombat : MonoBehaviour
 
         if (skill1CoolTimer > 0f) skill1CoolTimer -= Time.unscaledDeltaTime;
         if (skill2CoolTimer > 0f) skill2CoolTimer -= Time.unscaledDeltaTime;
+        if (ultimateCoolTimer > 0f) ultimateCoolTimer -= Time.unscaledDeltaTime;
     }
 
     // ───── 기본 공격 ─────
@@ -200,7 +203,8 @@ public class PlayerCombat : MonoBehaviour
 
     public void TrySkill1()
     {
-        if (IsLocked || skill1CoolTimer > 0f) return;
+        if (IsLocked) return;
+        if (skill1CoolTimer > 0f) { FailShake(); return; }
         StartCoroutine(DoSkill1());
     }
 
@@ -254,7 +258,9 @@ public class PlayerCombat : MonoBehaviour
 
     public void TrySkill2()
     {
-        if (IsLocked || skill2CoolTimer > 0f) return;
+        if (IsLocked) return;
+        if (skill2CoolTimer > 0f) { FailShake(); return; }
+        if (!controller.IsGrounded)  { FailShake(); return; }
         StartCoroutine(DoSkill2());
     }
 
@@ -278,9 +284,12 @@ public class PlayerCombat : MonoBehaviour
             Vector3 spawnPos = transform.position
                 + new Vector3(skill2EffectOffset.x * controller.FacingDirection,
                               skill2EffectOffset.y, 0f);
-            GameObject fx = Instantiate(skill2EffectPrefab, spawnPos, Quaternion.identity);
-            SpriteRenderer fxSr = fx.GetComponent<SpriteRenderer>();
-            if (fxSr != null) fxSr.flipX = controller.FacingDirection > 0;
+            GameObject fx = FXPool.Spawn(skill2EffectPrefab, spawnPos, Quaternion.identity);
+            if (fx != null)
+            {
+                SpriteRenderer fxSr = fx.GetComponent<SpriteRenderer>();
+                if (fxSr != null) fxSr.flipX = controller.FacingDirection > 0;
+            }
         }
 
         // 강한 히트스탑 + 셰이크
@@ -304,7 +313,9 @@ public class PlayerCombat : MonoBehaviour
     public void TryUltimate()
     {
         if (IsLocked || isUltimate) return;
-        if (slowMo == null || slowMo.CurrentGauge < ultimateMinGauge) return;
+        if (ultimateCoolTimer > 0f) { FailShake(); return; }
+        if (slowMo == null || slowMo.CurrentGauge < ultimateMinGauge) { FailShake(); return; }
+        if (!controller.IsGrounded) { FailShake(); return; }
         StartCoroutine(DoUltimate());
     }
 
@@ -312,6 +323,7 @@ public class PlayerCombat : MonoBehaviour
     {
         isUltimate = true;
         IsLocked = true;
+        ultimateCoolTimer = ultimateCooldown;   // 사용 즉시 쿨타임 시작
         controller.SetState(PlayerState.Ultimate);
 
         // 현재 게이지 전량 소비 → 게이지 비율로 히트수 결정
@@ -412,7 +424,7 @@ public class PlayerCombat : MonoBehaviour
     // 필살기 난격 — hit stop/shake은 DoUltimate가 별도로 처리하므로 여기선 슬래시/이펙트만
     private void OnHitEnemyUltimate(EnemyBase enemy)
     {
-        HitEffectManager.Instance?.SpawnHitEffect(enemy.transform.position);
+        HitEffectManager.Instance?.SpawnHitEffect((Vector3)enemy.BodyPosition);
 
         Vector3 sp = (Vector3)enemy.BodyPosition;
         sp.z = 0f;
@@ -426,7 +438,7 @@ public class PlayerCombat : MonoBehaviour
     {
         HitEffectManager.Instance?.TriggerHitStop(0.14f);
         HitEffectManager.Instance?.TriggerScreenShake(0.2f, 0.4f);
-        HitEffectManager.Instance?.SpawnHitEffect(enemy.transform.position);
+        HitEffectManager.Instance?.SpawnHitEffect((Vector3)enemy.BodyPosition);
         slowMo?.AddGauge(gaugePerHit);
     }
 
@@ -439,7 +451,7 @@ public class PlayerCombat : MonoBehaviour
         Vector2 slashDir = new Vector2(Mathf.Cos(rad), Mathf.Sin(rad));
         HitEffectManager.Instance?.TriggerDirectionalShake(shakeDur, shakeMag, slashDir, shakeBias);
 
-        HitEffectManager.Instance?.SpawnHitEffect(enemy.transform.position);
+        HitEffectManager.Instance?.SpawnHitEffect((Vector3)enemy.BodyPosition);
 
         Vector3 sp = (Vector3)enemy.BodyPosition;
         sp.z = 0f;
@@ -448,8 +460,13 @@ public class PlayerCombat : MonoBehaviour
         slowMo?.AddGauge(gaugePerHit);
     }
 
-    public float Skill1CooldownRatio => skill1CoolTimer / skill1Cooldown;
-    public float Skill2CooldownRatio => skill2CoolTimer / skill2Cooldown;
+    // 스킬 사용 실패 피드백 — 쿨타임 중, 공중 제한 등
+    private void FailShake() =>
+        HitEffectManager.Instance?.TriggerScreenShake(0.07f, 0.05f);
+
+    public float Skill1CooldownRatio    => skill1Cooldown > 0f ? Mathf.Clamp01(skill1CoolTimer / skill1Cooldown) : 0f;
+    public float Skill2CooldownRatio    => skill2Cooldown > 0f ? Mathf.Clamp01(skill2CoolTimer / skill2Cooldown) : 0f;
+    public float UltimateCooldownRatio  => ultimateCooldown > 0f ? Mathf.Clamp01(ultimateCoolTimer / ultimateCooldown) : 0f;
     public bool UltimateReady => slowMo != null && slowMo.CurrentGauge >= ultimateMinGauge && !isUltimate;
 
     // 필살기 카드용 — SkillCard는 0=사용가능, 1=풀쿨 규약을 따름
@@ -458,7 +475,9 @@ public class PlayerCombat : MonoBehaviour
     {
         get
         {
-            if (isUltimate) return 1f;          // 발동 중엔 풀쿨 표시
+            if (isUltimate) return 1f;
+            // slowMo 지연 참조 — Start 이전에 호출될 수 있으므로 재탐색
+            if (slowMo == null) slowMo = FindFirstObjectByType<SlowMotionSystem>();
             if (slowMo == null || ultimateMinGauge <= 0f) return 1f;
             return 1f - Mathf.Clamp01(slowMo.CurrentGauge / ultimateMinGauge);
         }

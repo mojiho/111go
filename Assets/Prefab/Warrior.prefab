@@ -728,6 +728,7 @@ MonoBehaviour:
   skill2Knockback: 15
   skill2EffectPrefab: {fileID: 3388476868260439812, guid: 05b76f4b364b99246a39e363bf984038, type: 3}
   skill2EffectOffset: {x: 1.5, y: -1.1}
+  ultimateCooldown: 8
   ultimateHitBox: {fileID: 8739757316952041706}
   ultimateActiveWindow: 0.04
   ultimateDamage: 55
@@ -805,6 +806,8 @@ MonoBehaviour:
   shockWavePrefab: {fileID: 6356589560200068261, guid: ec6ce0f45747f17449f873859c297806, type: 3}
   shockWaveBehindOffset: 0.4
   shockWaveBelowOffset: 0.3
+  jumpEffectPrefab: {fileID: 268099351674119126, guid: b4fa5e51955c95d4dbab537f5e44a11c, type: 3}
+  jumpEffectYOffset: -1
   fallMultiplier: 5
   lowJumpMultiplier: 2
   maxFallSpeed: 25
