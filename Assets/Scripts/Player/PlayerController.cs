@@ -6,15 +6,15 @@ public enum PlayerState { Idle, Run, Jump, Fall, Dash, Attack, Skill1, Skill2, U
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 //  조작키 (New Input System)
-//  이동       ←→ 방향키
-//  점프       ↑ 방향키
-//  대시       Left Ctrl
-//  공격       Z
-//  스킬1      X
-//  스킬2      C
-//  필살기     V
-//  패링       Left/Right Shift
-//  슬로우모션  Tab (홀드)
+//  이동         ←→ 방향키
+//  점프         ↑ 방향키
+//  대시         Left Shift
+//  기본공격     Left Ctrl
+//  대쉬어택(스킬1) Z
+//  강공격(스킬2)  X
+//  필살기       C
+//  패링         Right Shift
+//  슬로우모션    Tab (홀드)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 [RequireComponent(typeof(Rigidbody2D), typeof(PlayerCombat), typeof(PlayerStats))]
 public class PlayerController : MonoBehaviour
@@ -78,6 +78,11 @@ public class PlayerController : MonoBehaviour
     private float moveInput;
     private int jumpCount;
     private bool isDashing;
+    private bool isGroundDashing;
+    public bool IsGroundDashing => isGroundDashing;
+
+    // 투사체가 글로벌하게 체크 가능 — 한 명만 있을 거라 static
+    public static PlayerController Instance { get; private set; }
     private bool canDash = true;
     private float dashCoolTimer = 0f;
     public float DashCooldownRatio => dashCooldown > 0f ? Mathf.Clamp01(dashCoolTimer / dashCooldown) : 0f;
@@ -89,6 +94,7 @@ public class PlayerController : MonoBehaviour
 
     private void Awake()
     {
+        Instance = this;
         rb = GetComponent<Rigidbody2D>();
         anim = GetComponent<Animator>();
         combat = GetComponent<PlayerCombat>();
@@ -101,10 +107,42 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    private void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
+    }
+
     private void Update()
     {
         if (Keyboard.current == null) return;
         if (State == PlayerState.Dead) return;
+
+        // GameClear / GameOver 상태일 때 입력 + 이동 차단
+        if (GameManager.Instance != null && GameManager.Instance.State != GameState.Playing)
+        {
+            rb.linearVelocity = Vector2.zero;
+            moveInput = 0f;
+            return;
+        }
+
+        // 필살기 연출 중 — 모든 입력/이동 차단, velocity 강제 0
+        if (combat != null && combat.IsUltimate)
+        {
+            rb.linearVelocity = Vector2.zero;
+            moveInput = 0f;
+            UpdateAnimator();
+            UpdateDashCooldown();
+            return;
+        }
+
+        // 피격 직후 짧은 입력 불가 — 넉백/속도는 유지 (rb.linearVelocity 건드리지 않음)
+        if (stats != null && stats.IsHurtStunned)
+        {
+            moveInput = 0f;
+            UpdateAnimator();
+            UpdateDashCooldown();
+            return;
+        }
 
         CheckGround();
         HandleMovementInput();
@@ -187,12 +225,12 @@ public class PlayerController : MonoBehaviour
             }
             else
             {
-                SpawnShockWaveBelow();  // 이단점프: ShockWave만
+                SpawnShockWaveBelow(doubleJump: true);  // 이단점프: ShockWave 상하 + 좌우 반전
             }
         }
 
         // 대시: Left Ctrl (웅크려도 대시는 가능 — 대시 시 자동 해제)
-        if (kb.leftCtrlKey.wasPressedThisFrame && canDash)
+        if (kb.leftShiftKey.wasPressedThisFrame && canDash)
         {
             if (isCrouching) SetCrouch(false);
             StartCoroutine(DoDash());
@@ -240,14 +278,14 @@ public class PlayerController : MonoBehaviour
         if (isDashing) return;
 
         var kb = Keyboard.current;
-        bool attackPressed = kb.zKey.wasPressedThisFrame || kb.xKey.wasPressedThisFrame
-                          || kb.cKey.wasPressedThisFrame || kb.vKey.wasPressedThisFrame;
+        bool attackPressed = kb.leftCtrlKey.wasPressedThisFrame || kb.zKey.wasPressedThisFrame
+                          || kb.xKey.wasPressedThisFrame || kb.cKey.wasPressedThisFrame;
         if (attackPressed && isCrouching) SetCrouch(false);
 
-        if (kb.zKey.wasPressedThisFrame) combat.TryAttack();
-        if (kb.xKey.wasPressedThisFrame) combat.TrySkill1();
-        if (kb.cKey.wasPressedThisFrame) combat.TrySkill2();
-        if (kb.vKey.wasPressedThisFrame) combat.TryUltimate();
+        if (kb.leftCtrlKey.wasPressedThisFrame) combat.TryAttack();   // 기본 공격
+        if (kb.zKey.wasPressedThisFrame)        combat.TrySkill1();   // 대쉬어택
+        if (kb.xKey.wasPressedThisFrame)        combat.TrySkill2();   // 강공격
+        if (kb.cKey.wasPressedThisFrame)        combat.TryUltimate(); // 필살기
     }
 
     private IEnumerator DoDash()
@@ -256,6 +294,7 @@ public class PlayerController : MonoBehaviour
         isDashing = true;
         dashCoolTimer = dashCooldown;   // 사용 즉시 쿨타임 시작
         bool dashGrounded = IsGrounded;
+        isGroundDashing = dashGrounded;   // 지상 대시 동안만 true
         SetState(PlayerState.Dash);
 
         float dir = moveInput != 0 ? Mathf.Sign(moveInput) : FacingDirection;
@@ -266,7 +305,9 @@ public class PlayerController : MonoBehaviour
         anim?.Play(dashGrounded ? ANIM_SLIDE : ANIM_DASH, 0, 0f);
         prevAnimState = PlayerState.Dash;
 
-        stats.SetInvincible(dashDuration + 0.05f);
+        // 지상 대시만 무적 — 공중 대시는 피격 가능 (투사체에 맞을 수 있음)
+        if (dashGrounded)
+            stats.SetInvincible(dashDuration + 0.05f);
         HitEffectManager.Instance?.TriggerDashEffect(transform.position, dir);
         SpawnShockWaveBehind();
 
@@ -287,6 +328,7 @@ public class PlayerController : MonoBehaviour
         float endY = dashGrounded ? -5f : rb.linearVelocity.y;
         rb.linearVelocity = new Vector2(rb.linearVelocity.x * 0.2f, endY);
         isDashing = false;
+        isGroundDashing = false;
         SetState(PlayerState.Idle);   // 대시 끝난 직후 명시적으로 Idle 세팅 → Run이 덮지 못하게
 
         // 쿨타임은 Update에서 감소 (대쉬 종료 후 자동으로 canDash 복구)
@@ -314,8 +356,16 @@ public class PlayerController : MonoBehaviour
         GameObject fx = FXPool.Spawn(shockWavePrefab, pos, Quaternion.identity);
         if (fx != null)
         {
+            // FXPool 재사용으로 인한 이전 scale 잔재 리셋 — 모두 양수로 강제
+            Vector3 s = fx.transform.localScale;
+            fx.transform.localScale = new Vector3(Mathf.Abs(s.x), Mathf.Abs(s.y), Mathf.Abs(s.z));
+
             SpriteRenderer sr = fx.GetComponent<SpriteRenderer>();
-            if (sr != null) sr.flipX = FacingDirection > 0;
+            if (sr != null)
+            {
+                sr.flipX = FacingDirection > 0;
+                sr.flipY = false;   // 점프에서 셋한 flipY 잔재 제거
+            }
         }
     }
 
@@ -327,17 +377,29 @@ public class PlayerController : MonoBehaviour
         FXPool.Spawn(jumpEffectPrefab, pos, Quaternion.identity);
     }
 
-    // 점프 / 이단점프 — 발 아래 (90도 회전)
-    public void SpawnShockWaveBelow()
+    // 점프 / 이단점프 — 발 아래
+    // 첫 점프: -90° 회전 (U가 위로 ∪)
+    // 이단점프: +90° 회전 (U가 아래로 ∩ — 첫 점프 대비 180° 차이)
+    public void SpawnShockWaveBelow(bool doubleJump = false)
     {
         if (shockWavePrefab == null) return;
         Vector3 pos = transform.position
             + new Vector3(0f, -shockWaveBelowOffset, 0f);
-        GameObject fx = FXPool.Spawn(shockWavePrefab, pos, Quaternion.Euler(0f, 0f, -90f));
+
+        float zRot = doubleJump ? 90f : -90f;
+        // 이단점프 + 오른쪽 보기: 추가 180° 회전
+        if (doubleJump && FacingDirection >= 0) zRot += 180f;
+
+        GameObject fx = FXPool.Spawn(shockWavePrefab, pos, Quaternion.Euler(0f, 0f, zRot));
         if (fx != null)
         {
+            float baseX = Mathf.Abs(fx.transform.localScale.x);
+            float baseY = Mathf.Abs(fx.transform.localScale.y);
+            float sx = (FacingDirection < 0) ? -baseX : baseX;
+            fx.transform.localScale = new Vector3(sx, baseY, fx.transform.localScale.z);
+
             SpriteRenderer sr = fx.GetComponent<SpriteRenderer>();
-            if (sr != null) sr.flipY = FacingDirection < 0;
+            if (sr != null) { sr.flipX = false; sr.flipY = false; }
         }
     }
 

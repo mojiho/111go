@@ -38,6 +38,18 @@ public class SkillCard : MonoBehaviour
         iconImage.enabled = active;
     }
 
+    /// <summary>사용 가능 여부에 따라 카드 배경(부모 Image) 색상 변경 (false = 100/100/100 회색, true = 0/0/0 검정)</summary>
+    public void SetAvailableTint(bool available)
+    {
+        // 카드 루트의 Image 컴포넌트 (배경) — 자식 Image_Icon은 건드리지 않음
+        Image bg = GetComponent<Image>();
+        if (bg == null) return;
+        Color c = available
+            ? new Color(255f, 255f, 255f, bg.color.a)
+            : new Color(100f / 255f, 100f / 255f, 100f / 255f, bg.color.a);
+        bg.color = c;
+    }
+
     /// <summary>쿨타임 갱신 — ratio 0 = 사용 가능, 1 = 풀쿨</summary>
     public void SetCooldown(float ratio)
     {

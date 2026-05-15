@@ -36,8 +36,13 @@ public class EnemyHitBox : MonoBehaviour
         PlayerStats ps = other.GetComponent<PlayerStats>();
         if (ps != null)
         {
-            // 공격자(이 히트박스) → 플레이어 방향 = 카메라가 밀려야 할 방향
-            Vector2 hitDir = (Vector2)other.transform.position - (Vector2)transform.position;
+            // 적 본체 위치(이 히트박스의 부모 EnemyBase) → 플레이어 방향
+            // hitbox 자체 위치를 쓰면 hitbox가 플레이어를 지나쳐있을 때 부호 반전 → 팝업/넉백 방향 뒤집힘
+            EnemyBase enemy = GetComponentInParent<EnemyBase>();
+            Vector2 attackerPos = enemy != null
+                ? enemy.BodyPosition
+                : (Vector2)transform.position;
+            Vector2 hitDir = (Vector2)other.transform.position - attackerPos;
             ps.TakeDamage(damage, hitDir);
         }
     }

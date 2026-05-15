@@ -53,13 +53,26 @@ public class CameraController : MonoBehaviour
 
     private void Start()
     {
+        SnapToTarget();
+    }
+
+    /// <summary>외부에서 target 변경 후 호출 — 새 타겟으로 즉시 카메라 스냅</summary>
+    public void SetTarget(Transform newTarget)
+    {
+        target = newTarget;
+        SnapToTarget();
+    }
+
+    private void SnapToTarget()
+    {
         if (target == null) return;
-        targetRb    = target.GetComponent<Rigidbody2D>();
-        playerCtrl  = target.GetComponent<PlayerController>();
+        targetRb   = target.GetComponent<Rigidbody2D>();
+        playerCtrl = target.GetComponent<PlayerController>();
 
         // 시작 위치 즉시 스냅
         currentLookX = 0f;
         targetLookX  = 0f;
+        smoothVelocity = Vector3.zero;
         basePosition = DesiredPosition();
         transform.position = basePosition;
     }

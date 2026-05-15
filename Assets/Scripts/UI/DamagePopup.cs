@@ -43,14 +43,17 @@ public class DamagePopup : MonoBehaviour
         }
     }
 
-    public void Setup(int damageAmount, Vector3 direction)
+    public void Setup(int damageAmount, Vector3 direction) =>
+        Setup(damageAmount, direction, baseColor);
+
+    public void Setup(int damageAmount, Vector3 direction, Color color)
     {
         if (textMesh == null) return;
 
         textMesh.SetText(damageAmount.ToString());
 
         // 알파 풀 리셋 — 풀에서 재활용 시 알파가 0인 상태로 시작하지 않도록
-        _textColor = baseColor;
+        _textColor = color;
         _textColor.a = 1f;
         textMesh.color = _textColor;
 

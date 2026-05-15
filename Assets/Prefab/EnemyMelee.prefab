@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 3751518013414076228}
   - component: {fileID: 1353244369305056577}
   - component: {fileID: 3608265445928470279}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: Canvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -113,7 +113,7 @@ GameObject:
   - component: {fileID: 5875863438857546512}
   - component: {fileID: 2211872656030032615}
   - component: {fileID: 6565546003669407826}
-  m_Layer: 9
+  m_Layer: 8
   m_Name: MeleeHitBox
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -205,7 +205,7 @@ GameObject:
   - component: {fileID: 1005514410553228218}
   - component: {fileID: 8779561762731703859}
   - component: {fileID: 1734530881375461494}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: Fill Area
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -294,7 +294,7 @@ GameObject:
   - component: {fileID: 3702631084009033918}
   - component: {fileID: 5277553413820821665}
   - component: {fileID: 7753101846310306714}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: Slider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -399,7 +399,7 @@ GameObject:
   - component: {fileID: 6427769783336080923}
   - component: {fileID: 6629000975582747468}
   - component: {fileID: 1453176241273956551}
-  m_Layer: 9
+  m_Layer: 8
   m_Name: EnemyMelee
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -490,8 +490,8 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: -581143471
-  m_SortingLayer: 4
+  m_SortingLayerID: 1678695647
+  m_SortingLayer: 3
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: -750047184722822154, guid: 1914d95466e3d4341a618c35a56d5f82, type: 3}
@@ -582,7 +582,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyMelee
   maxHp: 60
   isElite: 0
-  detectRange: 8
+  detectRange: 80
   attackRange: 1.5
   loseRange: 14
   moveSpeed: 4
@@ -595,6 +595,14 @@ MonoBehaviour:
   hpBarCanvasGroup: {fileID: 7753101846310306714}
   hpBarFollow: {fileID: 0}
   hpBarOffset: {x: 0, y: 1.2}
+  animIdle: Idle
+  animWalk: Walk
+  animAttack: Attack
+  animHurt: Hurt
+  animDeath: Death
+  frozenHurtStateName: 
+  frozenHurtNormalizedTime: 0.3
+  stunFriction: 30
   attackDamage: 20
   attackCooldown: 2
   attackWindup: 0.4
@@ -612,7 +620,7 @@ GameObject:
   - component: {fileID: 4546473453630308801}
   - component: {fileID: 7159766664848928112}
   - component: {fileID: 65609117625065520}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: Fill
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -687,7 +695,7 @@ GameObject:
   - component: {fileID: 2982332641150404489}
   - component: {fileID: 5747713005630487740}
   - component: {fileID: 1176083614312786588}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: Background
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -760,7 +768,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8851156912254346848}
-  m_Layer: 9
+  m_Layer: 8
   m_Name: Center
   m_TagString: Untagged
   m_Icon: {fileID: 0}

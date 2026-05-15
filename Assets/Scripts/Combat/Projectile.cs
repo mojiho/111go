@@ -2,21 +2,25 @@ using UnityEngine;
 
 public class Projectile : MonoBehaviour
 {
-    public float speed  = 10f;
-    public float damage = 20f;
-    public float lifetime = 4f;
+    public float speed     = 10f;
+    public float damage    = 20f;
+    public float lifetime  = 4f;
     public float knockback = 4f;
-    public bool isPlayerProjectile = false;
+    public bool  isPlayerProjectile = false;
 
     [Header("Hit Animation")]
-    public string hitStateName = "Hit";   // Animator State 이름
+    public string hitStateName = "Hit";   // 비어있으면 즉시 파괴
+    public float  hitAnimLife  = 0.35f;   // hit anim 재생 후 파괴까지 시간
 
-    private Vector2   direction;
+    private Vector2     direction;
     private Rigidbody2D rb;
-    private Animator  anim;
-    private Collider2D col;
+    private Animator    anim;
+    private Collider2D  col;
+    private SpriteRenderer sr;
 
-    private bool _isHit;     // 충돌 처리 완료 — 중복 방지
+    private Vector3 _spawnPos;     // 발사 시점 위치 (Animator가 덮어써도 무시하기 위해)
+    private float   _elapsed;      // 발사 후 경과 시간
+    private bool _isHit;
     private bool _isFrozen;
     private Vector2 _frozenVel;
 
@@ -42,12 +46,12 @@ public class Projectile : MonoBehaviour
             p.SetFrozen(freeze);
     }
 
-    // ─── 초기화 ───
     private void Awake()
     {
         rb   = GetComponent<Rigidbody2D>();
         anim = GetComponent<Animator>();
         col  = GetComponent<Collider2D>();
+        sr   = GetComponent<SpriteRenderer>();
         if (rb != null) rb.gravityScale = 0f;
     }
 
@@ -57,39 +61,71 @@ public class Projectile : MonoBehaviour
         direction = dir.normalized;
         if (dmg >= 0f) damage = dmg;
 
-        if (rb != null)
-            rb.linearVelocity = direction * speed;
+        // Animator 클립이 position을 덮어쓰는 환경에서도 발사 위치/이동을 보존하기 위해
+        // 스폰 위치를 기억하고, LateUpdate에서 (스폰 + 경과시간*방향*속도)로 절대값 셋
+        _spawnPos = transform.position;
+        _elapsed  = 0f;
 
-        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-        transform.rotation = Quaternion.Euler(0f, 0f, angle);
-
-        // 애니메이터 재시작 (풀 재사용 대비)
-        anim?.Play("Projectile", 0, 0f);
+        if (rb != null) rb.linearVelocity = Vector2.zero;
 
         CancelInvoke(nameof(ForceDestroy));
         Invoke(nameof(ForceDestroy), lifetime);
     }
 
-    // ─── 이동 ───
-    private void Update()
+    // Animator가 transform.position을 덮어쓴 뒤 마지막에 직선 이동값으로 절대 셋
+    private void LateUpdate()
     {
         if (_isFrozen || _isHit) return;
-        if (rb == null)
-            transform.position += (Vector3)(direction * speed * Time.deltaTime);
 
-        // Hit 애니메이션 재생 중 — 끝나면 파괴
-        if (_isHit && anim != null)
+        Vector3 prevPos = transform.position;
+        _elapsed += Time.deltaTime;
+        Vector3 newPos = _spawnPos + (Vector3)(direction * speed * _elapsed);
+        transform.position = newPos;
+
+        // sprite 중심에 collider 위치 자동 동기화 — 프레임마다 pivot이 달라도 따라감
+        SyncColliderToSprite();
+
+        // ── 터널링 방지 — 두 프레임 사이 직선 구간을 Linecast로 검사 ──
+        SweepCheck(prevPos, newPos);
+    }
+
+    // sprite renderer의 bounds 중심에 collider offset을 맞춤 — 프레임마다 pivot 달라도 추적
+    private void SyncColliderToSprite()
+    {
+        if (col == null || sr == null || sr.sprite == null) return;
+        // sprite의 월드 중심 - transform 위치 = collider offset이 가져야 할 값 (local 기준)
+        Vector3 spriteCenterWorld = sr.bounds.center;
+        Vector3 localOffset = transform.InverseTransformPoint(spriteCenterWorld);
+        col.offset = new Vector2(localOffset.x, localOffset.y);
+    }
+
+    private void SweepCheck(Vector3 from, Vector3 to)
+    {
+        if (_isHit) return;
+        // 자기 자신 콜라이더가 결과에 포함되지 않도록 잠시 비활성
+        bool wasEnabled = col != null && col.enabled;
+        if (col != null) col.enabled = false;
+
+        RaycastHit2D[] hits = Physics2D.LinecastAll(from, to);
+
+        if (col != null) col.enabled = wasEnabled;
+
+        foreach (var hit in hits)
         {
-            var state = anim.GetCurrentAnimatorStateInfo(0);
-            if (state.IsName(hitStateName) && state.normalizedTime >= 1f)
-                ForceDestroy();
+            if (hit.collider == null) continue;
+            HandleHit(hit.collider);
+            if (_isHit) return;
         }
     }
 
-    // ─── 충돌 ───
-    private void OnTriggerEnter2D(Collider2D other)
+    private void HandleHit(Collider2D other)
     {
         if (_isHit) return;
+
+        // 플레이어가 지상 대시 중이면 이 프레임 어떤 충돌도 무시
+        // (Linecast가 player를 통과한 뒤 ground와 동시 hit하는 케이스 방지)
+        if (!isPlayerProjectile && PlayerController.Instance != null && PlayerController.Instance.IsGroundDashing)
+            return;
 
         bool shouldHit = false;
 
@@ -105,36 +141,39 @@ public class Projectile : MonoBehaviour
         }
         else
         {
-            PlayerStats player = other.GetComponent<PlayerStats>();
+            PlayerStats player = other.GetComponentInParent<PlayerStats>();
             if (player != null)
             {
+                // 지상 대시 중인 플레이어는 투사체가 통과 (피격/폭발 X)
+                PlayerController pc = player.GetComponent<PlayerController>();
+                if (pc != null && pc.IsGroundDashing) return;
+
                 player.TakeDamage(damage, direction);
                 shouldHit = true;
             }
         }
 
-        // 지형
         if (!shouldHit && other.gameObject.layer == LayerMask.NameToLayer("Ground"))
             shouldHit = true;
 
         if (shouldHit) PlayHitAndDestroy();
     }
 
-    // ─── Hit 연출 후 파괴 ───
+    private void OnTriggerEnter2D(Collider2D other) => HandleHit(other);
+
     private void PlayHitAndDestroy()
     {
         if (_isHit) return;
         _isHit = true;
 
-        // 이동 정지
-        if (rb != null) rb.linearVelocity = Vector2.zero;
+        if (rb  != null) rb.linearVelocity = Vector2.zero;
         if (col != null) col.enabled = false;
 
-        // Hit 애니메이터 State 재생
         if (anim != null && !string.IsNullOrEmpty(hitStateName))
         {
             anim.Play(hitStateName, 0, 0f);
-            // Update()에서 종료 감지 → ForceDestroy 호출
+            CancelInvoke(nameof(ForceDestroy));
+            Invoke(nameof(ForceDestroy), hitAnimLife);
         }
         else
         {

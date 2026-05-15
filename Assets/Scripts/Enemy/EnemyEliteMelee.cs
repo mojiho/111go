@@ -132,8 +132,13 @@ public class EnemyEliteMelee : EnemyBase
         anim?.Play(animIdle, 0, 0f);  // 윈드업 — 잠깐 멈춤
         yield return new WaitForSeconds(attackWindup * (isPhase2 ? 0.65f : 1f));
 
-        // 윈드업 중 피격됐으면 공격 취소
-        if (isDead || State == EnemyState.Hurt) { isActing = false; yield break; }
+        // 윈드업 중 피격/freeze/stun 됐으면 공격 취소
+        if (isDead || IsFrozen || IsHitStunned || State == EnemyState.Hurt)
+        {
+            meleeHitBox?.Deactivate();
+            isActing = false;
+            yield break;
+        }
 
         float dir = player != null
             ? (player.position.x > transform.position.x ? 1f : -1f)
@@ -173,7 +178,13 @@ public class EnemyEliteMelee : EnemyBase
 
         yield return new WaitForSeconds(0.15f);
 
-        if (isDead) { rb.gravityScale = prevGravity; isActing = false; yield break; }
+        if (isDead || IsFrozen || IsHitStunned)
+        {
+            spinHitBox?.Deactivate();
+            rb.gravityScale = prevGravity;
+            isActing = false;
+            yield break;
+        }
 
         spinHitBox?.Activate(spinDamage);
 

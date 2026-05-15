@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 4874479058376317308}
   - component: {fileID: 1546193635672130213}
   - component: {fileID: 466419308965557865}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: HitBox2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -107,7 +107,7 @@ GameObject:
   - component: {fileID: 7384363176763215837}
   - component: {fileID: 531385904390788371}
   - component: {fileID: 1706140200005584119}
-  m_Layer: 5
+  m_Layer: 9
   m_Name: Canvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -208,7 +208,7 @@ GameObject:
   - component: {fileID: 2888678624712569710}
   - component: {fileID: 5254292582708613909}
   - component: {fileID: 7455049636829637990}
-  m_Layer: 5
+  m_Layer: 9
   m_Name: Slider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -310,7 +310,7 @@ GameObject:
   - component: {fileID: 6114456887693448471}
   - component: {fileID: 7247910676604224591}
   - component: {fileID: 8739757316952041706}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: UltimateHitBox
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -405,7 +405,7 @@ GameObject:
   - component: {fileID: 4425135661101004964}
   - component: {fileID: 1649649216868469975}
   - component: {fileID: 253448373982000824}
-  m_Layer: 5
+  m_Layer: 9
   m_Name: Fill
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -478,7 +478,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4728135618800412154}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: GroundCheck
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -519,7 +519,7 @@ GameObject:
   - component: {fileID: 9031967664622771671}
   - component: {fileID: 6077423363331084280}
   - component: {fileID: 7060164710912772982}
-  m_Layer: 8
+  m_Layer: 9
   m_Name: Warrior
   m_TagString: Player
   m_Icon: {fileID: 0}
@@ -613,8 +613,8 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
+  m_SortingLayerID: -581143471
+  m_SortingLayer: 4
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: -3318188226485093758, guid: ae72133dacba6ec4eb33ecde48f50e56, type: 3}
@@ -716,18 +716,22 @@ MonoBehaviour:
   attackStepDecay: 0.25
   skill1HitBox: {fileID: 2538588840945713191}
   skill1Damage: 40
-  skill1DashSpeed: 28
-  skill1Duration: 0.22
-  skill1Cooldown: 4
+  skill1DashSpeed: 25
+  skill1Duration: 0.3
+  skill1Cooldown: 3
   skill1Knockback: 8
   deshGravityScale: 11
   skill2HitBox: {fileID: 466419308965557865}
   skill2Damage: 55
   skill2Duration: 0.5
-  skill2Cooldown: 6
+  skill2Cooldown: 8
   skill2Knockback: 15
   skill2EffectPrefab: {fileID: 3388476868260439812, guid: 05b76f4b364b99246a39e363bf984038, type: 3}
   skill2EffectOffset: {x: 1.5, y: -1.1}
+  skill2GeyserCount: 3
+  skill2GeyserStep: 1.5
+  skill2GeyserInterval: 0.05
+  skill2GeyserActiveTime: 0.08
   ultimateCooldown: 8
   ultimateHitBox: {fileID: 8739757316952041706}
   ultimateActiveWindow: 0.04
@@ -735,14 +739,19 @@ MonoBehaviour:
   ultimateHitCountMin: 10
   ultimateHitCountMax: 10
   ultimateHitInterval: 0.08
-  ultimateMinGauge: 30
+  ultimateMinGauge: 100
   ultimateKnockback: 4
   ultimateRadius: 2.2
   enemyLayer:
     serializedVersion: 2
     m_Bits: 256
   gaugePerHit: 15
-  slashLength: 3.5
+  hitStunDuration: 0.13
+  skill1StunDuration: 0.2
+  skill2StunDuration: 2
+  ultStunDuration: 0.05
+  slashLength: 6
+  skill1SlashLengthMul: 2
   slashYOffset: 0.5
   slashCombo1Color: {r: 1, g: 0.2, b: 0.15, a: 1}
   slashCombo2Color: {r: 1, g: 0.85, b: 0.2, a: 1}
@@ -769,7 +778,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c7a8ccb767047074d9cfeddfec899ef0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerStats
-  maxHp: 200
+  maxHp: 500
+  hurtKnockbackX: 6
+  hurtKnockbackY: 3
+  hurtKnockbackUseHitDir: 1
+  hurtStunDuration: 0.05
   worldHpSlider: {fileID: 5254292582708613909}
   hideWorldHpBarWhenFull: 1
   worldHpBarCanvasGroup: {fileID: 7455049636829637990}
@@ -801,11 +814,11 @@ MonoBehaviour:
   jumpForce: 10
   maxJumpCount: 2
   dashSpeed: 22
-  dashDuration: 0.14
+  dashDuration: 0.18
   dashCooldown: 0.7
   shockWavePrefab: {fileID: 6356589560200068261, guid: ec6ce0f45747f17449f873859c297806, type: 3}
-  shockWaveBehindOffset: 0.4
-  shockWaveBelowOffset: 0.3
+  shockWaveBehindOffset: 1
+  shockWaveBelowOffset: 1
   jumpEffectPrefab: {fileID: 268099351674119126, guid: b4fa5e51955c95d4dbab537f5e44a11c, type: 3}
   jumpEffectYOffset: -1
   fallMultiplier: 5
@@ -1051,6 +1064,7 @@ MonoBehaviour:
   slowMoBurstDuration: 0.15
   parryActiveColor: {r: 0.35, g: 0.9, b: 1, a: 1}
   parrySuccessColor: {r: 1, g: 0.92, b: 0.2, a: 1}
+  parryEnabled: 0
 --- !u!1 &7890285283012159622
 GameObject:
   m_ObjectHideFlags: 0
@@ -1062,7 +1076,7 @@ GameObject:
   - component: {fileID: 4476714541228814912}
   - component: {fileID: 7524890790587717519}
   - component: {fileID: 2538588840945713191}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: HitBox1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1157,7 +1171,7 @@ GameObject:
   - component: {fileID: 5613912695022437020}
   - component: {fileID: 3265305608725478978}
   - component: {fileID: 1311520225727418058}
-  m_Layer: 5
+  m_Layer: 9
   m_Name: Background
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1233,7 +1247,7 @@ GameObject:
   - component: {fileID: 7723601614832813829}
   - component: {fileID: 1860010730080453913}
   - component: {fileID: 7678873189890007619}
-  m_Layer: 5
+  m_Layer: 9
   m_Name: Fill Area
   m_TagString: Untagged
   m_Icon: {fileID: 0}

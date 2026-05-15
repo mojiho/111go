@@ -41,18 +41,28 @@ public class ParrySystem : MonoBehaviour
         slowMo = FindFirstObjectByType<SlowMotionSystem>();
     }
 
+    [Header("Parry Toggle")]
+    [Tooltip("패링 기능 활성화 여부")]
+    public bool parryEnabled = false;   // 일단 비활성
+
     private void Update()
     {
         if (cooldownTimer > 0f)
             cooldownTimer -= Time.unscaledDeltaTime;
 
-        if (Keyboard.current == null) return;
+        if (!parryEnabled) return;
 
-        // Shift (좌/우) 로 패링
-        bool shiftPressed = Keyboard.current.leftShiftKey.wasPressedThisFrame
-                         || Keyboard.current.rightShiftKey.wasPressedThisFrame;
+        if (GameManager.Instance != null && GameManager.Instance.State != GameState.Playing) return;
+
+        if (Keyboard.current == null) return;
+        bool shiftPressed = Keyboard.current.rightShiftKey.wasPressedThisFrame;
+
+        // 필살기 연출 중엔 패링도 차단
+        var combat = controller != null ? controller.GetComponent<PlayerCombat>() : null;
+        bool ultActive = combat != null && combat.IsUltimate;
 
         if (shiftPressed
+            && !ultActive
             && cooldownTimer <= 0f
             && controller.State != PlayerState.Dead
             && controller.State != PlayerState.Dash)

@@ -44,6 +44,13 @@ public class SlowMotionSystem : MonoBehaviour
     {
         if (Keyboard.current == null) return;
 
+        // GameClear/GameOver 상태일 때 입력 차단
+        if (GameManager.Instance != null && GameManager.Instance.State != GameState.Playing)
+        {
+            if (IsActive) Deactivate();
+            return;
+        }
+
         // Tab 홀드로 슬로우모션
         bool held = Keyboard.current.tabKey.isPressed;
 

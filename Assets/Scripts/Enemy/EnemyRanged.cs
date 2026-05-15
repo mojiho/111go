@@ -10,7 +10,7 @@ using UnityEngine;
 public class EnemyRanged : EnemyBase
 {
     [Header("Animation — Ranged")]
-    public string animCast  = "Cast";   // 발사 모션 State 이름
+    public string animCast  = "Cast 1";   // 발사 모션 State 이름
 
     [Header("Ranged Attack")]
     public GameObject projectilePrefab;
@@ -36,16 +36,55 @@ public class EnemyRanged : EnemyBase
     private bool  isFiring;
     private Color _baseColor;
 
+    private float _firePointBaseX;   // FirePoint 초기 localPosition.x (절대값)
+    private bool  _firePointInit;
+    private int   _lastMirrorSign;
+
     protected override void Awake()
     {
         base.Awake();
         attackRange    = preferredDistance + 1f;
         _baseColor     = sr != null ? sr.color : Color.white;
+
+        if (firePoint != null)
+        {
+            _firePointBaseX = Mathf.Abs(firePoint.localPosition.x);
+            _firePointInit  = true;
+        }
+    }
+
+    protected override void Update()
+    {
+        base.Update();
+        UpdateFirePointMirror();
+    }
+
+    // 적의 sr.flipX 상태에 맞춰 FirePoint의 X 부호를 매 프레임 동기화
+    private void UpdateFirePointMirror()
+    {
+        if (!_firePointInit || firePoint == null || sr == null) return;
+
+        // sr.flipX 와 spriteDefaultRight로 실제 바라보는 방향 계산
+        bool facingRight = spriteDefaultRight ? !sr.flipX : sr.flipX;
+        int signX = facingRight ? 1 : -1;
+        if (signX == _lastMirrorSign) return;
+        _lastMirrorSign = signX;
+
+        Vector3 lp = firePoint.localPosition;
+        lp.x = signX * _firePointBaseX;
+        firePoint.localPosition = lp;
     }
 
     protected override void UpdateStateMachine()
     {
         if (fireCoolTimer > 0f) fireCoolTimer -= DeltaTime;
+
+        // 공격 중에는 어떠한 경우에도 이동하지 않음 — 매 프레임 강제 정지
+        if (isFiring)
+        {
+            StopMoving();
+            return;
+        }
 
         float dist = DistanceToPlayer();
 
@@ -60,18 +99,15 @@ public class EnemyRanged : EnemyBase
             case EnemyState.Chase:
                 if (dist > loseRange) { SetState(EnemyState.Idle); break; }
 
-                if (!isFiring)
-                {
-                    if (dist < tooCloseDistance)
-                        Retreat();
-                    else if (dist > preferredDistance)
-                        MoveToward(player.position, moveSpeed);
-                    else
-                        StopMoving();
+                if (dist < tooCloseDistance)
+                    Retreat();
+                else if (dist > preferredDistance)
+                    MoveToward(player.position, moveSpeed);
+                else
+                    StopMoving();
 
-                    if (dist <= attackRange && fireCoolTimer <= 0f)
-                        StartCoroutine(DoFire());
-                }
+                if (dist <= attackRange && fireCoolTimer <= 0f)
+                    StartCoroutine(DoFire());
                 break;
 
             case EnemyState.Attack:
@@ -98,16 +134,26 @@ public class EnemyRanged : EnemyBase
         SetState(EnemyState.Attack);
         StopMoving();
 
+        // 공격 시작 시점의 facing을 고정 — 플레이어가 통과해도 방향 안 바뀜
+        lockFacing = true;
+
         // 발사 예고 애니메이션 + 스프라이트 플래시
         anim?.Play(animCast, 0, 0f);
         yield return StartCoroutine(WindupFlash(windupDuration));
 
-        if (isDead) { isFiring = false; yield break; }
+        // 죽음/freeze/stun 시 발사 취소
+        if (isDead || IsFrozen || IsHitStunned)
+        {
+            isFiring = false;
+            lockFacing = false;
+            if (sr != null) sr.color = _baseColor;
+            yield break;
+        }
 
         // 연사
         for (int i = 0; i < burstCount; i++)
         {
-            if (isDead) break;
+            if (isDead || IsFrozen || IsHitStunned) break;
             SpawnProjectile(i);
             if (i < burstCount - 1)
                 yield return new WaitForSeconds(burstInterval);
@@ -116,7 +162,8 @@ public class EnemyRanged : EnemyBase
         yield return new WaitForSeconds(0.2f);
 
         isFiring = false;
-        if (!isDead) SetState(EnemyState.Chase);
+        lockFacing = false;
+        if (!isDead && !IsHitStunned) SetState(EnemyState.Chase);
     }
 
     // 윈드업 동안 스프라이트를 플래시 색 ↔ 원래 색으로 깜빡임
@@ -127,7 +174,8 @@ public class EnemyRanged : EnemyBase
         float t = 0f;
         while (t < duration)
         {
-            if (isDead) break;
+            // 죽음/freeze/stun 시 즉시 중단
+            if (isDead || IsFrozen || IsHitStunned) break;
             float k = Mathf.PingPong(t * windupFlashSpeed, 1f);
             sr.color = Color.Lerp(_baseColor, windupFlashColor, k);
             t += Time.deltaTime;
@@ -142,7 +190,20 @@ public class EnemyRanged : EnemyBase
         if (projectilePrefab == null || player == null) return;
 
         Transform spawnPt = firePoint != null ? firePoint : transform;
-        Vector2 baseDir   = ((Vector2)player.position - (Vector2)spawnPt.position).normalized;
+        // 공격 시작 시점의 facing 방향으로 발사 — lockFacing이 true라 sr.flipX가 고정됨
+        // 플레이어가 도중에 반대편으로 가도 원래 조준한 방향으로 쏘게 됨
+        float dirX;
+        if (sr != null)
+        {
+            bool facingRight = spriteDefaultRight ? !sr.flipX : sr.flipX;
+            dirX = facingRight ? 1f : -1f;
+        }
+        else
+        {
+            // sr 없으면 fallback: 현재 player 위치 기준
+            dirX = player.position.x > spawnPt.position.x ? 1f : -1f;
+        }
+        Vector2 baseDir = new Vector2(dirX, 0f);
 
         // 연사 퍼짐 — burstIndex 기준 균등 분배
         float angle = 0f;

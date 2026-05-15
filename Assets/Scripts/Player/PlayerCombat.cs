@@ -31,6 +31,14 @@ public class PlayerCombat : MonoBehaviour
     public float skill2Knockback = 12f;
     public GameObject skill2EffectPrefab;        // FX_FireGeyser 프리팹 연결
     public Vector2 skill2EffectOffset = new Vector2(0f, 0f);  // 발 위치 기준 오프셋
+    [Tooltip("화염 분출 횟수 (앞으로 전진하며 N번)")]
+    public int skill2GeyserCount = 3;
+    [Tooltip("Geyser 간 전진 거리 (월드 X 단위)")]
+    public float skill2GeyserStep = 1.5f;
+    [Tooltip("Geyser 간 시간 간격")]
+    public float skill2GeyserInterval = 0.1f;
+    [Tooltip("각 Geyser당 hitbox 활성 시간")]
+    public float skill2GeyserActiveTime = 0.18f;
 
     [Header("Ultimate - 난격 (V / 게이지 전량 소비)")]
     public float ultimateCooldown = 8f;         // 사용 후 재사용 대기시간
@@ -49,8 +57,20 @@ public class PlayerCombat : MonoBehaviour
     [Header("Slow Gauge Gain")]
     public float gaugePerHit = 15f;
 
+    [Header("Hit Stun (적에게 부여)")]
+    [Tooltip("일반 공격 명중 시 적이 행동 불가 시간")]
+    public float hitStunDuration = 0.05f;
+    [Tooltip("Skill1(X) 명중 시 적이 행동 불가 시간")]
+    public float skill1StunDuration = 0.12f;
+    [Tooltip("Skill2(C) 명중 시 적이 행동 불가 시간")]
+    public float skill2StunDuration = 0.15f;
+    [Tooltip("필살기 매 타 명중 시 적이 행동 불가 시간")]
+    public float ultStunDuration = 0.05f;
+
     [Header("Slash Effect")]
-    public float slashLength = 3.5f;             // 길게
+    public float slashLength = 6.0f;             // 기본 슬래시 길이 (콤보)
+    [Tooltip("Skill1(Z) 슬래시는 기본 길이의 N배")]
+    public float skill1SlashLengthMul = 2.0f;
     public float slashYOffset = 0.5f;
     public Color slashCombo1Color = new Color(1f, 0.2f, 0.15f, 1f);   // 1타 — 붉은색
     public Color slashCombo2Color = new Color(1f, 0.85f, 0.2f, 1f);   // 2타 — 노란색
@@ -78,6 +98,7 @@ public class PlayerCombat : MonoBehaviour
     private Color pendingSlashColor;
 
     public bool IsLocked { get; private set; }
+    public bool IsUltimate => isUltimate;
 
     // 피격 등 외부에서 강제로 전투 잠금 해제 (히트박스도 비활성)
     public void ForceUnlock()
@@ -88,6 +109,13 @@ public class PlayerCombat : MonoBehaviour
         skill1HitBox?.Deactivate();
         skill2HitBox?.Deactivate();
         ultimateHitBox?.Deactivate();
+
+        // 중단된 스킬이 변경한 상태 복원 — 중력
+        if (rb != null) rb.gravityScale = 3f;
+
+        // 정적 플래그 — 시네마틱 중 SuppressDamagePopup이 켜졌을 수도 있음
+        EnemyBase.SuppressDamagePopup = false;
+
         StopAllCoroutines();
     }
 
@@ -229,7 +257,7 @@ public class PlayerCombat : MonoBehaviour
         float slashAngle = wasGrounded ? 0f : -20f * dir;
         pendingSlashAngle  = slashAngle;
         pendingSlashColor  = slashSkill1Color;
-        pendingSlashLength = slashLength * 1.6f;
+        pendingSlashLength = slashLength * skill1SlashLengthMul;
 
         // 대쉬 시작과 동시에 히트박스 활성 (터널링 방지)
         skill1HitBox?.Activate(skill1Damage, skill1Knockback * dir, OnHitEnemySkill1);
@@ -275,37 +303,125 @@ public class PlayerCombat : MonoBehaviour
 
         controller.PlayAttackAnim(0);  // 강공격 — 1타 모션 사용
 
+        // 강공격 시작~끝 동안 플레이어 앞쪽 전체 영역 투사체 청소
+        Coroutine cleaner = StartCoroutine(Skill2ProjectileCleaner());
+
         // 짧은 선딜 (강공격 느낌)
         yield return new WaitForSeconds(skill2Duration * 0.25f);
 
-        // 이펙트 스폰 — 플레이어 발 위치 기준
-        if (skill2EffectPrefab != null)
+        // 강한 초기 히트스탑 + 셰이크 (첫 발 임팩트)
+        HitEffectManager.Instance?.TriggerHitStop(0.1f);
+        HitEffectManager.Instance?.TriggerScreenShake(0.18f, 0.4f);
+
+        float facing = controller.FacingDirection;
+        Vector3 hbBaseWorld = skill2HitBox != null ? skill2HitBox.transform.position : Vector3.zero;
+
+        // ── N번 화염 분출 — 앞으로 전진하며 ──
+        for (int i = 0; i < skill2GeyserCount; i++)
         {
+            // i 번째 geyser의 X 오프셋 (월드 좌표 기준 facing 적용)
+            float worldOffsetX = (skill2EffectOffset.x + skill2GeyserStep * i) * facing;
             Vector3 spawnPos = transform.position
-                + new Vector3(skill2EffectOffset.x * controller.FacingDirection,
-                              skill2EffectOffset.y, 0f);
-            GameObject fx = FXPool.Spawn(skill2EffectPrefab, spawnPos, Quaternion.identity);
-            if (fx != null)
+                + new Vector3(worldOffsetX, skill2EffectOffset.y, 0f);
+
+            // 이펙트 스폰
+            if (skill2EffectPrefab != null)
             {
-                SpriteRenderer fxSr = fx.GetComponent<SpriteRenderer>();
-                if (fxSr != null) fxSr.flipX = controller.FacingDirection > 0;
+                GameObject fx = FXPool.Spawn(skill2EffectPrefab, spawnPos, Quaternion.identity);
+                if (fx != null)
+                {
+                    SpriteRenderer fxSr = fx.GetComponent<SpriteRenderer>();
+                    if (fxSr != null) fxSr.flipX = facing > 0;
+                }
             }
+
+            // Hitbox를 geyser 위치로 이동
+            if (skill2HitBox != null)
+                skill2HitBox.transform.position = spawnPos;
+
+            // 매 분출마다 추가 셰이크
+            if (i > 0)
+                HitEffectManager.Instance?.TriggerScreenShake(0.08f, 0.25f);
+
+            // Geyser 영역 안 적 투사체 제거 — 화염이 투사체를 태워 없앰
+            DestroyProjectilesAround(spawnPos, skill2GeyserStep * 0.7f);
+
+            // Hitbox 활성 → 짧게 유지 → 비활성
+            skill2HitBox?.Activate(skill2Damage, skill2Knockback * facing, OnHitEnemySkill2);
+            yield return new WaitForSeconds(skill2GeyserActiveTime);
+            skill2HitBox?.Deactivate();
+
+            // 활성 시간 중에도 한 번 더 청소 (윈드업 사이 새로 들어온 투사체)
+            DestroyProjectilesAround(spawnPos, skill2GeyserStep * 0.7f);
+
+            if (i < skill2GeyserCount - 1)
+                yield return new WaitForSeconds(skill2GeyserInterval);
         }
 
-        // 강한 히트스탑 + 셰이크
-        HitEffectManager.Instance?.TriggerHitStop(0.12f);
-        HitEffectManager.Instance?.TriggerScreenShake(0.2f, 0.4f);
-
-        skill2HitBox?.Activate(skill2Damage, skill2Knockback * controller.FacingDirection, OnHitEnemySkill2);
-
-        yield return new WaitForSeconds(skill2Duration * 0.5f);
-
-        skill2HitBox?.Deactivate();
+        // Hitbox 위치 복원 (Warrior 부모의 원래 위치)
+        if (skill2HitBox != null)
+            skill2HitBox.transform.position = hbBaseWorld;
 
         yield return new WaitForSeconds(skill2Duration * 0.25f);
 
+        // 청소 코루틴 정지
+        if (cleaner != null) StopCoroutine(cleaner);
+
         rb.gravityScale = 3f;
         IsLocked = false;
+    }
+
+    // Skill2 시작~끝 동안 플레이어 앞쪽 전체 영역에서 적 투사체를 매 프레임 제거
+    private IEnumerator Skill2ProjectileCleaner()
+    {
+        float facing = controller.FacingDirection;
+        // 플레이어 위치 ~ 마지막 geyser 위치를 덮는 박스
+        float forwardReach = skill2EffectOffset.x + skill2GeyserStep * (skill2GeyserCount - 1) + skill2GeyserStep * 0.7f;
+        float boxWidth = forwardReach;
+        float boxHeight = 4f;   // 위아래로 충분히 (점프/낙하 투사체 포함)
+
+        while (true)
+        {
+            // 박스 중심 = 플레이어 + 전방 거리 절반
+            Vector3 center = transform.position + new Vector3((forwardReach * 0.5f) * facing, 0f, 0f);
+            DestroyEnemyProjectilesInBox(center, new Vector2(boxWidth, boxHeight));
+            yield return null;
+        }
+    }
+
+    private void DestroyEnemyProjectilesInBox(Vector3 center, Vector2 size)
+    {
+        Collider2D[] hits = Physics2D.OverlapBoxAll(center, size, 0f);
+        foreach (var hit in hits)
+        {
+            if (hit == null) continue;
+            Projectile proj = hit.GetComponent<Projectile>();
+            if (proj == null) proj = hit.GetComponentInParent<Projectile>();
+            if (proj != null && !proj.isPlayerProjectile)
+            {
+                HitEffectManager.Instance?.SpawnHitEffect(proj.transform.position);
+                Destroy(proj.gameObject);
+            }
+        }
+    }
+
+    // Geyser 영역 안 적 투사체 제거 — Skill2가 투사체를 태움 (기존 — 호환용)
+    private void DestroyProjectilesAround(Vector3 center, float radius)
+    {
+        Collider2D[] hits = Physics2D.OverlapCircleAll(center, radius);
+        foreach (var hit in hits)
+        {
+            if (hit == null) continue;
+            Projectile proj = hit.GetComponent<Projectile>();
+            if (proj == null) proj = hit.GetComponentInParent<Projectile>();
+            // 적 투사체만 제거 (플레이어 투사체는 보존)
+            if (proj != null && !proj.isPlayerProjectile)
+            {
+                // 작은 히트 이펙트로 시각적 피드백
+                HitEffectManager.Instance?.SpawnHitEffect(proj.transform.position);
+                Destroy(proj.gameObject);
+            }
+        }
     }
 
     // ───── 필살기 : 난격 ─────
@@ -387,7 +503,7 @@ public class PlayerCombat : MonoBehaviour
         {
             yield return HitEffectManager.Instance.PlayUltimate(
                 transform.position, targets, hitCount, ultimateDamage,
-                ultimateKnockback * controller.FacingDirection, hbBounds);
+                ultimateKnockback * controller.FacingDirection, hbBounds, ultStunDuration);
         }
         else
         {
@@ -414,28 +530,36 @@ public class PlayerCombat : MonoBehaviour
 
     // ───── 공통 히트 콜백 ─────
 
-    private void OnHitEnemy(EnemyBase enemy) =>
+    private void OnHitEnemy(EnemyBase enemy)
+    {
+        enemy?.ApplyHitStun(hitStunDuration);
         DoHitEffects(enemy, hitShakeDuration, hitShakeMagnitude, hitShakeBias, 0.08f);
+    }
 
-    // Skill1 전용 콜백 — 더 강한 셰이크 + 약간 더 긴 hit stop
-    private void OnHitEnemySkill1(EnemyBase enemy) =>
+    // Skill1 전용 콜백 — 더 강한 셰이크 + 약간 더 긴 hit stop + 더 긴 stun
+    private void OnHitEnemySkill1(EnemyBase enemy)
+    {
+        enemy?.ApplyHitStun(skill1StunDuration);
         DoHitEffects(enemy, skill1ShakeDuration, skill1ShakeMagnitude, skill1ShakeBias, 0.12f);
+    }
 
     // 필살기 난격 — hit stop/shake은 DoUltimate가 별도로 처리하므로 여기선 슬래시/이펙트만
     private void OnHitEnemyUltimate(EnemyBase enemy)
     {
+        enemy?.ApplyHitStun(ultStunDuration);
         HitEffectManager.Instance?.SpawnHitEffect((Vector3)enemy.BodyPosition);
 
         Vector3 sp = (Vector3)enemy.BodyPosition;
         sp.z = 0f;
         SlashEffect.Spawn(sp, pendingSlashAngle, pendingSlashLength, pendingSlashColor, 0.12f, 0.3f);
 
-        slowMo?.AddGauge(gaugePerHit * 0.3f);  // 필살기 중엔 게이지 적게 회수
+        slowMo?.AddGauge(gaugePerHit * 0.3f);
     }
 
     // Skill2 전용 콜백 — SlashEffect 없음 (이펙트 프리팹으로 대체)
     private void OnHitEnemySkill2(EnemyBase enemy)
     {
+        enemy?.ApplyHitStun(skill2StunDuration);
         HitEffectManager.Instance?.TriggerHitStop(0.14f);
         HitEffectManager.Instance?.TriggerScreenShake(0.2f, 0.4f);
         HitEffectManager.Instance?.SpawnHitEffect((Vector3)enemy.BodyPosition);

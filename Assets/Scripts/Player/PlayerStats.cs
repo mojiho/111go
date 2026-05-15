@@ -9,6 +9,17 @@ public class PlayerStats : MonoBehaviour
     public float maxHp = 200f;
     public float currentHp { get; private set; }
 
+    [Header("Knockback (on hurt)")]
+    public float hurtKnockbackX = 6f;
+    public float hurtKnockbackY = 3f;
+    [Tooltip("hitDirection이 음수일 때 부호 자동 반전")]
+    public bool hurtKnockbackUseHitDir = true;
+
+    [Header("Hit Stun (피격 후 입력 불가)")]
+    public float hurtStunDuration = 0.05f;
+    private float _hurtStunTimer;
+    public bool IsHurtStunned => _hurtStunTimer > 0f;
+
     [Header("World-Space HP Bar (선택)")]
     public Slider worldHpSlider;            // 머리 위 슬라이더
     public bool hideWorldHpBarWhenFull = true;
@@ -29,12 +40,14 @@ public class PlayerStats : MonoBehaviour
     private PlayerController controller;
     private SpriteRenderer spriteRenderer;
     private ParrySystem parrySystem;
+    private Rigidbody2D rb;
 
     private void Awake()
     {
         controller = GetComponent<PlayerController>();
         spriteRenderer = GetComponent<SpriteRenderer>();
         parrySystem = GetComponent<ParrySystem>();
+        rb = GetComponent<Rigidbody2D>();
         currentHp = maxHp;
 
         if (worldHpSlider != null)
@@ -46,6 +59,12 @@ public class PlayerStats : MonoBehaviour
             worldHpSlider.value = 1f;
         }
         UpdateWorldHpBarVisibility();
+    }
+
+    private void Update()
+    {
+        if (_hurtStunTimer > 0f)
+            _hurtStunTimer -= Time.deltaTime;
     }
 
     private void UpdateWorldHpBar()
@@ -102,6 +121,32 @@ public class PlayerStats : MonoBehaviour
         OnHpChanged?.Invoke(currentHp, maxHp);
         UpdateWorldHpBar();
 
+        // 데미지 팝업 — 적과 동일한 방식, 방향은 hitDirection 사용
+        Vector3 popupDir = hitDirection.sqrMagnitude > 0.0001f
+            ? (Vector3)hitDirection
+            : new Vector3(-Mathf.Sign(transform.localScale.x), 0f, 0f);
+        DamagePopupManager.Instance?.ShowPopup(
+            Mathf.RoundToInt(damage),
+            (Vector2)transform.position + Vector2.up * 0.8f,
+            popupDir,
+            new Color(1f, 0.25f, 0.2f, 1f));   // 플레이어 피격 — 빨간색
+
+        // 피격 입력 불가 타이머 시작
+        _hurtStunTimer = hurtStunDuration;
+
+        // 넉백 — hitDirection 부호로 X 결정 + 약한 Y 부양
+        if (rb != null)
+        {
+            float kbSignX;
+            if (hurtKnockbackUseHitDir && hitDirection.sqrMagnitude > 0.0001f)
+                kbSignX = Mathf.Sign(hitDirection.x);
+            else
+                kbSignX = -Mathf.Sign(transform.localScale.x);  // 보는 방향 반대로 밀림
+            if (kbSignX == 0f) kbSignX = 1f;
+
+            rb.linearVelocity = new Vector2(kbSignX * hurtKnockbackX, hurtKnockbackY);
+        }
+
         HitEffectManager.Instance?.TriggerHitFlash(spriteRenderer);
         HitEffectManager.Instance?.SpawnPlayerHitEffect(transform.position);
 
@@ -120,10 +165,7 @@ public class PlayerStats : MonoBehaviour
             OnDead?.Invoke();
             controller.Die();
         }
-        else
-        {
-            SetInvincible(0.4f);
-        }
+        // 피격 후 무적시간 제거 — 연속 피격 가능
     }
 
     public void SetInvincible(float duration)

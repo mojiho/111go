@@ -47,11 +47,18 @@ public abstract class EnemyBase : MonoBehaviour
     public string frozenHurtStateName = "";
     [Range(0f, 1f)] public float frozenHurtNormalizedTime = 0.3f;
 
-    [Header("Hit Stun")]
-    [Tooltip("피격 후 짧게 아무것도 못하는 시간 (행동 불가)")]
-    public float postHitStunDuration = 0.05f;
+    // ── Hit Stun — 공격자가 ApplyHitStun(duration)으로 외부에서 셋 ──
+    [Header("Hit Stun (감속)")]
+    [Tooltip("Stun 중 X velocity 감속도 — 클수록 빨리 멈춤")]
+    public float stunFriction = 30f;
     private float _hitStunTimer;
     public bool IsHitStunned => _hitStunTimer > 0f;
+
+    /// <summary>공격자(예: PlayerCombat)가 피격 직후 호출. 더 긴 stun이 들어오면 갱신.</summary>
+    public void ApplyHitStun(float duration)
+    {
+        if (duration > _hitStunTimer) _hitStunTimer = duration;
+    }
 
     public EnemyState State { get; protected set; }
 
@@ -89,6 +96,9 @@ public abstract class EnemyBase : MonoBehaviour
             if (anim != null) anim.speed = _frozenAnimSpeed;
         }
     }
+
+    // 필살기 시네마틱 등 외부에서 자체적으로 팝업을 띄울 때 자동 팝업 억제
+    public static bool SuppressDamagePopup;
 
     // 모든 적 freeze (필살기 연출용)
     public static void FreezeAll(bool freeze)
@@ -171,7 +181,19 @@ public abstract class EnemyBase : MonoBehaviour
         if (_hitStunTimer > 0f)
         {
             _hitStunTimer -= Time.deltaTime;
-            // Stun 중엔 AI/이동 결정만 skip — velocity는 그대로 두어 넉백 유지
+
+            // Stun 동안 Hurt 애니메이션 유지 — Animator가 자연 전이로 빠져나가도 즉시 다시 셋
+            if (anim != null && !string.IsNullOrEmpty(animHurt))
+            {
+                var info = anim.GetCurrentAnimatorStateInfo(0);
+                if (!info.IsName(animHurt))
+                    anim.Play(animHurt, 0, 0f);
+            }
+
+            // Stun 중 X velocity를 지면 마찰처럼 0으로 감속 — 긴 stun에서도 미끄러지지 않게
+            // Y는 중력 그대로 유지
+            float vx = Mathf.MoveTowards(rb.linearVelocity.x, 0f, stunFriction * Time.deltaTime);
+            rb.linearVelocity = new Vector2(vx, rb.linearVelocity.y);
             return;
         }
 
@@ -222,9 +244,13 @@ public abstract class EnemyBase : MonoBehaviour
     private bool centerInit;
     private float centerBaseX;
 
+    // 외부(공격 코루틴 등)에서 facing 갱신을 잠그고 싶을 때 true로 설정
+    protected bool lockFacing;
+
     private void UpdateFacing()
     {
         if (sr == null) return;
+        if (lockFacing) return;   // 공격 중 facing 잠금
         // Chase·Attack 상태에서만 매 프레임 플레이어 방향으로 갱신
         // Idle 이동 방향은 MoveToward() 호출 시점에 ApplyFacing()으로 즉시 처리
         if ((State == EnemyState.Chase || State == EnemyState.Attack) && player != null)
@@ -288,11 +314,14 @@ public abstract class EnemyBase : MonoBehaviour
         currentHp -= damage;
         HitEffectManager.Instance?.TriggerHitFlash(sr);
         UpdateHpBar();
-        _hitStunTimer = postHitStunDuration;   // 매 피격마다 짧은 stun
+        // ※ stun은 공격자(PlayerCombat 등)가 ApplyHitStun으로 명시적으로 부여
 
-        // 데미지 팝업 — 넉백 방향을 direction으로 사용
-        Vector3 popupDir = new Vector3(knockbackX, 0f, 0f);
-        DamagePopupManager.Instance?.ShowPopup(Mathf.RoundToInt(damage), BodyPosition + Vector2.up * 0.5f, popupDir);
+        // 데미지 팝업 — 외부에서 자체 팝업을 띄우는 경우 억제
+        if (!SuppressDamagePopup)
+        {
+            Vector3 popupDir = new Vector3(knockbackX, 0f, 0f);
+            DamagePopupManager.Instance?.ShowPopup(Mathf.RoundToInt(damage), BodyPosition + Vector2.up * 0.5f, popupDir);
+        }
 
         float actualKnockback = knockbackX * (1f - knockbackResistance);
         rb.linearVelocity = new Vector2(actualKnockback, rb.linearVelocity.y + 3f);

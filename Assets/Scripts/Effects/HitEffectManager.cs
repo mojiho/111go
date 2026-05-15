@@ -50,6 +50,16 @@ public class HitEffectManager : MonoBehaviour
     [Header("Ultimate Cinematic — BlackOut Color (완전 검정)")]
     public Color ultBlackOutColor = new Color(0f, 0f, 0f, 1f);
 
+    [Header("Ultimate Cinematic — World Slash (적/투사체 위치)")]
+    [Tooltip("적 위치 슬래시 — 길이 / 두께 / 수명")]
+    public float ultEnemySlashLength = 3.5f;
+    public float ultEnemySlashThickness = 0.3f;
+    public float ultEnemySlashLife = 0.18f;
+    [Tooltip("투사체 위치 슬래시 — 길이 / 두께 / 수명")]
+    public float ultProjectileSlashLength = 2.5f;
+    public float ultProjectileSlashThickness = 0.25f;
+    public float ultProjectileSlashLife = 0.18f;
+
     [Header("Ultimate Cinematic — Slash Visual (UI)")]
     public Color[] ultSlashColors = new[]
     {
@@ -177,7 +187,7 @@ public class HitEffectManager : MonoBehaviour
     /// 화면 내 모든 투사체는 freeze 후 연출 종료 시 제거.</summary>
     public IEnumerator PlayUltimate(Vector3 playerWorldPos, List<EnemyBase> targets,
                                     int hitCount, float perHitDamage, float knockback,
-                                    Bounds? hitboxBounds = null)
+                                    Bounds? hitboxBounds = null, float stunPerHit = 0.05f)
     {
         IsUltimatePlaying = true;
 
@@ -195,6 +205,11 @@ public class HitEffectManager : MonoBehaviour
             p.SetFrozen(true);
             frozenProjectiles.Add(p);
         }
+
+        // ── 시네마틱 동안 hitbox 안으로 들어오는 적/투사체 추가 감시 시작 ──
+        Coroutine monitor = null;
+        if (hitboxBounds.HasValue)
+            monitor = StartCoroutine(MonitorNewEntries(hitboxBounds.Value, targets, frozenProjectiles));
 
         // ── 2. Impact 이펙트 ──
         if (ultImpactPrefab != null)
@@ -236,11 +251,17 @@ public class HitEffectManager : MonoBehaviour
         if (ultBlackOutImage != null) ultBlackOutImage.gameObject.SetActive(false);
         ClearUltSlashes();
 
+        // 감시 중단 — 이후 순차 타격 동안 새로 추가되지 않게
+        if (monitor != null) StopCoroutine(monitor);
+
         // 적 unfreeze — 이제부터 Hurt 애니메이션/넉백이 정상 동작해야 함
         foreach (var t in targets)
             if (t != null) t.SetFrozen(false);
 
         Debug.Log($"[Ultimate Cinematic] 순차타격 시작 — targets={targets.Count} hitCount={hitCount} dmgPerHit={perHitDamage}");
+
+        // EnemyBase 자체 데미지 팝업 억제 — 시네마틱이 방향 강제해서 직접 띄움
+        EnemyBase.SuppressDamagePopup = true;
 
         // ── 7. 순차 다타격 — 타수에 맞춰 0.1초 간격으로 1타씩 ──
         for (int i = 0; i < hitCount; i++)
@@ -251,15 +272,45 @@ public class HitEffectManager : MonoBehaviour
             {
                 if (t == null) continue;
                 float kb = (t.transform.position.x > playerWorldPos.x ? 1f : -1f) * knockback;
-                t.TakeDamage(perHitDamage, kb);
+
+                // 데미지 팝업 방향 — 플레이어 기준 적이 있는 쪽 (오른쪽 적 → 오른쪽으로 튕김)
+                float popupSignX = (t.transform.position.x > playerWorldPos.x) ? 1f : -1f;
+                Vector3 popupDir = new Vector3(popupSignX, 0f, 0f);
+
+                // 적이 죽었어도 데미지 팝업/슬래시 이펙트는 끝까지 표시
+                bool wasAlive = t.currentHp > 0f;
+                if (wasAlive)
+                {
+                    t.TakeDamage(perHitDamage, kb);
+                    t.ApplyHitStun(stunPerHit);
+                }
+                // 항상 직접 띄움 — facing 반대 방향 보장 (살았든 죽었든)
+                DamagePopupManager.Instance?.ShowPopup(
+                    Mathf.RoundToInt(perHitDamage),
+                    t.BodyPosition + Vector2.up * 0.5f,
+                    popupDir);
                 hitsApplied++;
 
                 Vector3 sp = (Vector3)t.BodyPosition;
                 sp.z = 0f;
                 Color slashCol = ultSlashColors[i % ultSlashColors.Length];
-                SlashEffect.Spawn(sp, slashBaseAngle + Random.Range(-10f, 10f), 3.5f, slashCol, 0.18f, 0.3f);
+                SlashEffect.Spawn(sp, slashBaseAngle + Random.Range(-10f, 10f),
+                                  ultEnemySlashLength, slashCol, ultEnemySlashLife, ultEnemySlashThickness);
                 SpawnHitEffect((Vector3)t.BodyPosition);
             }
+
+            // 투사체에도 슬래시 연출 — 데미지는 없지만 시각적으로 같이 베이는 느낌
+            Color projSlashCol = ultSlashColors[i % ultSlashColors.Length];
+            foreach (var p in frozenProjectiles)
+            {
+                if (p == null) continue;
+                Vector3 pp = p.transform.position;
+                pp.z = 0f;
+                SlashEffect.Spawn(pp, slashBaseAngle + Random.Range(-10f, 10f),
+                                  ultProjectileSlashLength, projSlashCol, ultProjectileSlashLife, ultProjectileSlashThickness);
+                SpawnHitEffect(pp);
+            }
+
             Debug.Log($"[Ultimate Cinematic] hit#{i+1}/{hitCount} 적용={hitsApplied}");
 
             TriggerHitStop(0.03f);
@@ -270,11 +321,47 @@ public class HitEffectManager : MonoBehaviour
 
         yield return new WaitForSecondsRealtime(ultPostDamageHold);
 
+        // 자동 팝업 억제 플래그 복원
+        EnemyBase.SuppressDamagePopup = false;
+
         // ── 8. 투사체 정리 ──
         foreach (var p in frozenProjectiles)
             if (p != null) Destroy(p.gameObject);
 
         IsUltimatePlaying = false;
+    }
+
+    // 시네마틱 동안 hitbox 영역에 새로 진입한 적/투사체를 감지해서 freeze 리스트에 추가
+    private IEnumerator MonitorNewEntries(Bounds bounds, List<EnemyBase> targets, List<Projectile> frozenProjectiles)
+    {
+        const float scanInterval = 0.05f;
+        while (true)
+        {
+            // 새 적 검출
+            Collider2D[] hits = Physics2D.OverlapBoxAll(bounds.center, bounds.size, 0f);
+            foreach (var h in hits)
+            {
+                if (h == null) continue;
+                EnemyBase e = h.GetComponentInParent<EnemyBase>();
+                if (e != null && !targets.Contains(e))
+                {
+                    e.SetFrozen(true);
+                    targets.Add(e);
+                }
+            }
+
+            // 새 투사체 검출
+            foreach (var p in FindObjectsByType<Projectile>(FindObjectsSortMode.None))
+            {
+                if (p == null) continue;
+                if (frozenProjectiles.Contains(p)) continue;
+                if (!bounds.Contains(p.transform.position)) continue;
+                p.SetFrozen(true);
+                frozenProjectiles.Add(p);
+            }
+
+            yield return new WaitForSecondsRealtime(scanInterval);
+        }
     }
 
     private IEnumerator FadeBlackOut(float fromA, float toA, float duration)

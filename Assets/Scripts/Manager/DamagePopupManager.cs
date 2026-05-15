@@ -2,8 +2,8 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /* 
- * µ¥¹ÌÁö ÆË¾÷ ¸Å´ÏÀú Å¬·¡½º ÀÔ´Ï´Ù.
- * µ¥¹ÌÁö ÆË¾÷ ¿ÀºêÁ§Æ®¸¦ Ç®¸µÇÏ¿© °ü¸®ÇÕ´Ï´Ù.
+ * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ë¾ï¿½ ï¿½Å´ï¿½ï¿½ï¿½ Å¬ï¿½ï¿½ï¿½ï¿½ ï¿½Ô´Ï´ï¿½.
+ * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ë¾ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ Ç®ï¿½ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
  */
 
 public class DamagePopupManager : MonoBehaviour
@@ -23,21 +23,29 @@ public class DamagePopupManager : MonoBehaviour
 
     public void ShowPopup(int damage, Vector3 position, Vector3 direction)
     {
-        DamagePopup popup;
+        var popup = AcquirePopup(position);
+        popup.Setup(damage, direction);
+    }
 
+    public void ShowPopup(int damage, Vector3 position, Vector3 direction, Color color)
+    {
+        var popup = AcquirePopup(position);
+        popup.Setup(damage, direction, color);
+    }
+
+    private DamagePopup AcquirePopup(Vector3 position)
+    {
+        DamagePopup popup;
         if (_pool.Count > 0)
-        {
             popup = _pool.Dequeue();
-        }
         else
         {
             GameObject obj = Instantiate(popupPrefab, _tr);
             popup = obj.GetComponent<DamagePopup>();
         }
-
         popup.gameObject.SetActive(true);
         popup.transform.position = position;
-        popup.Setup(damage, direction);
+        return popup;
     }
 
     public void ReturnPopup(DamagePopup popup)

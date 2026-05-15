@@ -66,8 +66,13 @@ public class EnemyMelee : EnemyBase
         anim?.Play(animIdle, 0, 0f);
         yield return new WaitForSeconds(attackWindup);
 
-        // 윈드업 중 피격됐으면 공격 취소
-        if (isDead || State == EnemyState.Hurt) { isActing = false; yield break; }
+        // 윈드업 중 피격/freeze/stun 됐으면 공격 취소
+        if (isDead || IsFrozen || IsHitStunned || State == EnemyState.Hurt)
+        {
+            meleeHitBox?.Deactivate();
+            isActing = false;
+            yield break;
+        }
 
         // 공격 모션 + 히트박스 활성 (제자리)
         anim?.Play(animAttack, 0, 0f);
@@ -80,17 +85,26 @@ public class EnemyMelee : EnemyBase
             meleeHitBox.transform.localPosition = new Vector3(Mathf.Abs(hp.x) * dir, hp.y, hp.z);
         }
 
-        yield return new WaitForSeconds(0.1f);   // 공격 모션 시작 후 0.1초 뒤 판정 활성
-        if (isDead) { isActing = false; yield break; }
+        yield return new WaitForSeconds(0.1f);
+
+        if (isDead || IsFrozen || IsHitStunned)
+        {
+            meleeHitBox?.Deactivate();
+            isActing = false;
+            yield break;
+        }
+
         meleeHitBox?.Activate(attackDamage);
         yield return new WaitForSeconds(attackActiveTime);
         meleeHitBox?.Deactivate();
+
+        if (isDead || IsFrozen || IsHitStunned) { isActing = false; yield break; }
 
         // 공격 후 경직
         yield return new WaitForSeconds(attackRecover);
 
         isActing = false;
-        if (!isDead) SetState(EnemyState.Chase);
+        if (!isDead && !IsHitStunned) SetState(EnemyState.Chase);
     }
 
     protected override void Die()
